@@ -70,7 +70,7 @@ Save and exit. Reboot for changes to take effect.
 | option | description | default |
 |--------|-------------|---------|
 | [`cam0`](#cam0) | Use cam0 port instead of cam1 | cam1 |
-| [`2lane`](#2lane) | Use 2-lane MIPI CSI-2 instead of 4-lane | 4 lanes |
+| [`2lane`](#2lane) | Use 2-lane MIPI CSI-2 | 4 lanes |
 | [`mono`](#mono) | Enable monochrome sensor variant | off |
 | [`always-on`](#always-on) | Keep regulator powered (prevents runtime PM power-off) | off |
 | [`link-frequency=<Hz>`](#link-frequency) | Set MIPI CSI-2 link frequency (Hz) | 720000000 |
@@ -105,7 +105,7 @@ dtoverlay=imx585,mono
 
 ### always-on
 
-`always-on` keeps the camera regulator permanently enabled, preventing the kernel from powering off the sensor during runtime PM suspend. Useful for debugging hardware issues, since it forces `CAM_GPIO` high constantly.
+`always-on` keeps camera regulator permanently enabled, preventing kernel from powering off the sensor during runtime PM suspend. Useful for debugging hardware issues, since it forces `CAM_GPIO` high constantly.
 
 ```ini
 dtoverlay=imx585,always-on
