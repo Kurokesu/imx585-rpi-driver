@@ -1,144 +1,328 @@
-# Kernel Driver for IMX585
+# IMX585 kernel driver for Raspberry Pi
 
-This guide provides detailed instructions on how to install the IMX585 kernel driver on a Linux system, specifically Raspbian.
+[![Build](https://github.com/Kurokesu/imx585-rpi-driver/actions/workflows/build-rpi.yml/badge.svg)](https://github.com/Kurokesu/imx585-rpi-driver/actions/workflows/build-rpi.yml)
+[![Raspberry Pi OS Bookworm](https://img.shields.io/badge/Raspberry_Pi_OS-Bookworm-blue?logo=raspberrypi)](https://www.debian.org/releases/bookworm/)
+[![Raspberry Pi OS Trixie](https://img.shields.io/badge/Raspberry_Pi_OS-Trixie-blue?logo=raspberrypi)](https://www.debian.org/releases/trixie/)
+[![Kernel 6.12+](https://img.shields.io/badge/kernel-6.12%2B-blue?logo=raspberrypi)](https://github.com/raspberrypi/linux/tree/rpi-6.12.y)
 
-## Special Thanks
+Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illuminated CMOS sensor optimised for low-light and 4K applications.
 
-Special thanks to Soho-enterprise for the additional register info.  
-Special thanks to Sasha Shturma's Raspberry Pi CM4 Сarrier with Hi-Res MIPI Display project, the DKMS install script is adapted from the github project page: https://github.com/renetec-io/cm4-panel-jdi-lt070me05000
+- 2-lane and 4-lane MIPI CSI-2 (up to 1782 Mbps/lane)
+- 10-bit and 12-bit RAW output
+- 3856×2180 @ up to 60 fps, 4-lane 12-bit
+- ClearHDR mode for high-dynamic-range capture
+- Mono variant support
+- Three sync modes for multi-camera setups
 
-## Prerequisites
+## Setup
 
-Before you begin the installation process, please ensure the following prerequisites are met:
-
-- **Kernel version**: You should be running on a Linux kernel version 6.12 or newer. You can verify your kernel version by executing `uname -r` in your terminal.
-
-- **Development tools**: Essential tools such as `gcc`, `dkms`, and `linux-headers` are required for compiling a kernel module. If not already installed, these can be installed using the package manager with the following command:
-  
-   ```bash 
-   sudo apt install linux-headers dkms git
-   ```
-   
-## Installation Steps
-
-### Setting Up the Tools
-
-First, install the necessary tools (`linux-headers`, `dkms`, and `git`) if you haven't done so:
-
-```bash 
-sudo apt install linux-headers dkms git
-```
-
-### Fetching the Source Code
-
-Clone the repository to your local machine and navigate to the cloned directory:
+Install required tools:
 
 ```bash
-git clone https://github.com/will127534/imx585-v4l2-driver.git
-cd imx585-v4l2-driver/
+sudo apt install -y git
+sudo apt install -y --no-install-recommends dkms
 ```
 
-### Compiling and Installing the Kernel Driver
-
-To compile and install the kernel driver, execute the provided installation script:
-
-```bash 
-./setup.sh
-```
-
-### Updating the Boot Configuration
-
-Edit the boot configuration file using the following command:
+Clone this repository:
 
 ```bash
-sudo nano /boot/config.txt
+cd ~
+git clone https://github.com/Kurokesu/imx585-rpi-driver.git
+cd imx585-rpi-driver/
 ```
 
-In the opened editor, locate the line containing `camera_auto_detect` and change its value to `0`. Then, add the line `dtoverlay=imx585`. So, it will look like this:
+Run setup script:
 
+```bash
+sudo ./setup.sh
 ```
+
+Edit boot configuration:
+
+```bash
+sudo nano /boot/firmware/config.txt
+```
+
+Make two changes:
+
+1. Find `camera_auto_detect` near the top and set it to `0`:
+
+```ini
 camera_auto_detect=0
+```
+
+2. Add `dtoverlay=imx585` under the `[all]` section at the bottom of the file:
+
+```ini
+[all]
 dtoverlay=imx585
 ```
 
-After making these changes, save the file and exit the editor.
+Save and exit. Reboot for changes to take effect.
 
-Remember to reboot your system for the changes to take effect.
+> [!IMPORTANT]
+> Stock `libcamera` does not support IMX585. You must build a patched version for camera to function. See [Build libcamera](#build-libcamera) below.
 
 ## dtoverlay options
 
+`imx585` overlay supports comma-separated options to override defaults:
+
+| option | description | default |
+|--------|-------------|---------|
+| [`cam0`](#cam0) | Use cam0 port instead of cam1 | cam1 |
+| [`2lane`](#2lane) | Use 2-lane MIPI CSI-2 instead of 4-lane | 4 lanes |
+| [`mono`](#mono) | Enable monochrome sensor variant | off |
+| [`always-on`](#always-on) | Keep regulator powered (prevents runtime PM power-off) | off |
+| [`link-frequency=<Hz>`](#link-frequency) | Set MIPI CSI-2 link frequency (Hz) | 720000000 |
+| [`sync-mode=<mode>`](#sync-modes) | Multi-camera synchronization mode | internal-leader |
+
 ### cam0
 
-If the camera is attached to cam0 port, append the dtoverlay with `,cam0` like this:  
-```
-camera_auto_detect=0
+If camera is connected to cam0 port, append `,cam0`:
+
+```ini
 dtoverlay=imx585,cam0
+```
+
+### 2lane
+
+To use 2-lane MIPI CSI-2 instead of the default 4-lane, append `,2lane`:
+
+```ini
+dtoverlay=imx585,2lane
+```
+
+> [!NOTE]
+> Maximum framerate is roughly halved on 2-lane compared to 4-lane at the same link frequency. See the [link-frequency](#link-frequency) table for exact values.
+
+### mono
+
+For the monochrome sensor variant, append `,mono`:
+
+```ini
+dtoverlay=imx585,mono
 ```
 
 ### always-on
 
-If you want to keep the camera power always on (Useful for debugging HW issues, specifically this will set CAM_GPIO to high constantly), append the dtoverlay with `,always-on` like this:  
-```
-camera_auto_detect=0
+`always-on` keeps the camera regulator permanently enabled, preventing the kernel from powering off the sensor during runtime PM suspend. Useful for debugging hardware issues, since it forces `CAM_GPIO` high constantly.
+
+```ini
 dtoverlay=imx585,always-on
-```
-
-### mono
-
-If you are using a monochrome varient, append the dtoverlay with `,mono` like this:  
-```
-camera_auto_detect=0
-dtoverlay=imx585,mono
-```
-
-### Lane Count
-
-If you want to use 2-lane for IMX585, append the dtoverlay with `,2lane` like this:  
-```
-camera_auto_detect=0
-dtoverlay=imx585,2lane
 ```
 
 ### link-frequency
 
-If you want to change the default link frequency of 1440Mbps/lane (720Mhz), you can chage it like the following:
+Default link frequency is 720 MHz (1440 Mbps/lane). Other values trade MIPI bandwidth against maximum framerate.
+
+To change link frequency, append `,link-frequency=<Hz>`:
+
+```ini
+dtoverlay=imx585,link-frequency=891000000
 ```
-camera_auto_detect=0
-dtoverlay=imx585,link-frequency=297000000
+
+| Frequency (Hz) | Mbps/lane | Max FPS @ 4K 12-bit 4-lane | Max FPS @ 4K 12-bit 2-lane |
+|---|---|---|---|
+| 297000000 | 594 | 20.8 fps | 10.4 fps |
+| 360000000 | 720 | 25.0 fps | 12.5 fps |
+| 445500000 | 891 | 30.0 fps | 15.0 fps |
+| 594000000 | 1188 | 41.7 fps | 20.8 fps |
+| 720000000 (default) | 1440 | 50.0 fps | 25.0 fps |
+| 891000000 | 1782 | 60.0 fps | 30.0 fps |
+| 1039500000 | 2079 | 75.0 fps | 37.5 fps |
+
+> [!NOTE]
+> RPi5/RP1 has a 400 Mpix/s processing limit. Without overclocking RP1 (the Camera Frontend), effective framerate is capped at ~43.8 fps @ 4K regardless of the link frequency configured here.
+
+> [!NOTE]
+> ClearHDR halves the framerate. 1080p 2×2 binned mode doubles it.
+
+> [!WARNING]
+> The driver also accepts 1188 MHz (2376 Mbps/lane), but RPi4 does not support this rate and RPi5 exhibits frame drops. Not recommended for production use.
+
+### Sync modes
+
+The driver exposes three sync modes for multi-camera setups, selectable via the `sync-mode` overlay option:
+
+| Mode | Description |
+|---|---|
+| `internal-leader` (default) | Sensor runs from its own internal clock and outputs both `XVS` (vertical sync) and `XHS` (horizontal sync). Other cameras can lock onto these signals. |
+| `internal-follower` | Sensor still uses its own clock, but takes in an external `XVS` signal. It aligns vertical sync to this input by adding or subtracting a horizontal sync pulse. |
+| `external` | Sensor clock and timing are fully driven by external `XVS` and `XHS` signals. Both syncs are inputs, no outputs are generated. |
+
+```ini
+dtoverlay=imx585,sync-mode=internal-follower
 ```
-Here is a list of available frequencies:
-| Valid Frequency Value | Mbps/Lane | Max Framerate with 4K 12bit + 4 lane | Max Framerate with 4K 12bit + 2 lane |
-| -------- | -------- | -------- | -------- |
-| 297000000|594 Mbps/Lane| 20.8 fps | 10.4 fps|
-| 360000000|720 Mbps/Lane| 25.0 fps | 12.5 fps|
-| 445500000|891 Mbps/Lane| 30.0 fps | 15.0 fps|
-| 594000000|1188 Mbps/Lane| 41.7 fps| 20.8 fps|
-| 720000000|1440 Mbps/Lane| 50.0 fps | 25.0 fps|
-| 891000000|1782 Mbps/Lane| 60.0 fps | 30.0 fps|
-| 1039500000|2079 Mbps/Lane| 75.0 fps | 37.5 fps|
 
-Notes that by default RPI5/RP1 has a limit of 400Mpix/s processing speed, without overclocking RP1 (hence the Camera Frontend) you will be limited to ~43.8 FPS @ 4K.  
-For ClearHDR mode the framerate will be half, for 1080P 2x2 binned the framerate will be double.  
-1188 Mhz (2376 Mbps/lane) is also in the driver but RPI4 doesn't supports it from testing and RPI5 experience framedrop.  
+See the [IMX585 Camera Clock Synchronization Guide](https://github.com/will127534/StarlightEye/wiki/IMX585-Camera-Clock-Synchronization-Guide) for hardware wiring and timing details.
 
-### Sync-Mode
+> [!TIP]
+> Options can be combined. Example (mono, always-on, cam0, 297 MHz link):
+>
+> ```ini
+> dtoverlay=imx585,mono,always-on,cam0,link-frequency=297000000
+> ```
 
-The driver exposes three sync modes, selectable via dtoverlay parameters:
-| Mode                  | Description |
-|-----------------------|-------------|
-| **internal-leader** (default) | Sensor runs from its own internal clock and outputs both `XVS` (vertical sync) and `XHS` (horizontal sync). Other cameras can lock onto these signals. |
-| **internal-follower** | Sensor still uses its own clock, but takes in an external `XVS` signal. It aligns vertical sync to this input by adding or subtracting a horizontal sync pulse. |
-| **external**          | Sensor clock and timing are fully driven by external `XVS` and `XHS` signals. Both syncs are inputs, no outputs are generated. |
+## Build libcamera
 
-See [here](https://github.com/will127534/StarlightEye/wiki/IMX585-Camera-Clock-Synchronization-Guide) for the full guide.
+Main `libcamera` repository does not support IMX585. A fork with necessary modifications is available.
 
+On Raspberry Pi, `libcamera` and `rpicam-apps` must be rebuilt together. Detailed instructions are available [here](https://www.raspberrypi.com/documentation/computers/camera_software.html#advanced-rpicam-apps), but for convenience, here is a shorter version.
 
-### mix usage
+Remove pre-installed `rpicam-apps`:
 
-Last note is that all the options can be used at the same time, the dtoverlay will looks like this:
+```bash
+sudo apt remove --purge rpicam-apps
 ```
-camera_auto_detect=0
-dtoverlay=imx585,mono,always-on,cam0,link-frequency=297000000
-```
-Imaging how many config I need to test.
 
+### libcamera
+
+Install dependencies:
+
+```bash
+sudo apt install -y libboost-dev
+sudo apt install -y libgnutls28-dev openssl libtiff5-dev pybind11-dev
+sudo apt install -y qtbase5-dev libqt5core5a libqt5gui5 libqt5widgets5
+sudo apt install -y meson cmake
+sudo apt install -y python3-yaml python3-ply
+sudo apt install -y libglib2.0-dev libgstreamer-plugins-base1.0-dev
+```
+
+Clone Kurokesu's `libcamera` fork with IMX585 support:
+
+```bash
+cd ~
+git clone https://github.com/Kurokesu/libcamera.git --branch imx585
+cd libcamera/
+```
+
+Configure with `meson`:
+
+```bash
+meson setup build --buildtype=release -Dpipelines=rpi/vc4,rpi/pisp -Dipas=rpi/vc4,rpi/pisp -Dv4l2=enabled -Dgstreamer=enabled -Dtest=false -Dlc-compliance=disabled -Dcam=disabled -Dqcam=disabled -Ddocumentation=disabled -Dpycamera=enabled
+```
+
+Build:
+
+```bash
+ninja -C build
+```
+
+Install:
+
+```bash
+sudo ninja -C build install
+```
+
+> [!TIP]
+> On devices with 1 GB of memory or less, build may exceed available memory. Append `-j 1` to limit to a single process.
+
+> [!WARNING]
+> `libcamera` does not yet have a stable binary interface. Always build `rpicam-apps` after building `libcamera`.
+
+### rpicam-apps
+
+Install dependencies:
+
+```bash
+sudo apt install -y cmake libboost-program-options-dev libdrm-dev libexif-dev
+sudo apt install -y libavcodec-dev libavdevice-dev libavformat-dev libswresample-dev
+sudo apt install -y libepoxy-dev libpng-dev
+```
+
+Clone Raspberry Pi's `rpicam-apps` repository:
+
+```bash
+cd ~
+git clone https://github.com/raspberrypi/rpicam-apps.git
+cd rpicam-apps
+```
+
+Configure with `meson` (libav enabled by default):
+
+```bash
+meson setup build -Denable_libav=enabled -Denable_drm=enabled -Denable_egl=enabled -Denable_qt=enabled -Denable_opencv=disabled -Denable_tflite=disabled -Denable_hailo=disabled
+```
+
+> [!IMPORTANT]
+> On Raspberry Pi OS **Bookworm**, packaged `libav*` is **too old** for `rpicam-apps` newer than v1.9.0.
+
+<details>
+<summary>Bookworm libav workaround</summary>
+
+Bookworm ships `libavcodec` **59.x** while newer `rpicam-apps` expects **libavcodec >= 60**, causing build errors like "libavcodec API version is too old" (see [Raspberry Pi forum thread](https://forums.raspberrypi.com/viewtopic.php?t=392649)).
+
+- **Keep libav** by checking out `rpicam-apps` **v1.9.0** before running `meson setup`:
+  ```bash
+  git checkout v1.9.0
+  ```
+- **Disable libav** if building `rpicam-apps` > v1.9.0:
+  ```bash
+  meson setup build -Denable_libav=disabled -Denable_drm=enabled -Denable_egl=enabled -Denable_qt=enabled -Denable_opencv=disabled -Denable_tflite=disabled -Denable_hailo=disabled
+  ```
+
+</details>
+
+Build:
+
+```bash
+meson compile -C build
+```
+
+Install:
+
+```bash
+sudo meson install -C build
+```
+
+> [!TIP]
+> This should automatically update `ldconfig` cache. If you have trouble accessing your new build, update manually:
+>
+> ```bash
+> sudo ldconfig
+> ```
+
+### Verify rpicam-apps build
+
+Verify `rpicam-apps` was rebuilt correctly:
+
+```bash
+rpicam-hello --version
+```
+
+Expected output (build date will differ):
+
+```
+rpicam-apps build: v1.12.0 ea1bbcbea049 14-05-2026 (08:13:45)
+rpicam-apps capabilites: egl:1 qt:1 drm:1 libav:1
+libcamera build: v0.7.1+rpt20260429+1-ebac948d
+```
+
+### Verify that `imx585` is detected
+
+Do not forget to reboot!
+
+```bash
+sudo reboot
+```
+
+List available cameras:
+
+```bash
+rpicam-hello --list-cameras
+```
+
+Expected output (varies by link frequency and lane configuration):
+
+```
+Available cameras
+-----------------
+0 : imx585 [3840x2160 12-bit RGGB] (/base/axi/pcie@1000120000/rp1/i2c@80000/imx585@1a)
+    Modes: 'SRGGB12_CSI2P' : 1928x1090 [50.00 fps - (0, 0)/3840x2160 crop]
+                             3856x2180 [43.80 fps - (0, 0)/3840x2160 crop]
+```
+
+## Special thanks
+
+- [Will Whang](https://github.com/will127534) for the original IMX585 driver ([imx585-v4l2-driver](https://github.com/will127534/imx585-v4l2-driver)).
+- Soho Enterprises for additional register information (passed through from Will's repo).
