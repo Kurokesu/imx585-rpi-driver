@@ -15,14 +15,15 @@ PACKAGE_NAME=$(grep '^PACKAGE_NAME=' "$SCRIPT_DIR/dkms.conf" | cut -d'"' -f2)
 VERSION=$(grep '^PACKAGE_VERSION=' "$SCRIPT_DIR/dkms.conf" | cut -d'"' -f2)
 
 if [ -z "$PACKAGE_NAME" ] || [ -z "$VERSION" ]; then
-	echo "Error: Failed to read PACKAGE_NAME or PACKAGE_VERSION from dkms.conf"
+	echo "Error: Failed to read PACKAGE_NAME or PACKAGE_VERSION from dkms.conf" >&2
 	exit 1
 fi
 
 DKMS_SRC="/usr/src/${PACKAGE_NAME}-${VERSION}"
 
 if ! command -v dkms >/dev/null 2>&1; then
-	echo "Error: dkms is not installed. Install it with: sudo apt install -y --no-install-recommends dkms"
+	echo "Error: dkms is not installed. Install with:" >&2
+	echo "    sudo apt install -y --no-install-recommends dkms" >&2
 	exit 1
 fi
 
