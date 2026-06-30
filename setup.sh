@@ -26,11 +26,19 @@ if ! command -v dkms >/dev/null 2>&1; then
 	exit 1
 fi
 
-OLD_VER=$(dkms status -m "$PACKAGE_NAME" 2>/dev/null | cut -d'/' -f2 | cut -d',' -f1)
-if [ -n "$OLD_VER" ]; then
-	print DKMS "remove ${PACKAGE_NAME}/${OLD_VER} (previous)"
-	dkms remove "${PACKAGE_NAME}/${OLD_VER}" --all || true
+LEGACY_NAME=$(echo "$PACKAGE_NAME" | sed 's/-rpi-/-/')
+NAMES="$PACKAGE_NAME"
+if [ "$LEGACY_NAME" != "$PACKAGE_NAME" ]; then
+	NAMES="$NAMES $LEGACY_NAME"
 fi
+
+for name in $NAMES; do
+	ver=$(dkms status -m "$name" 2>/dev/null | awk -F'[/,: ]' '{print $2; exit}')
+	if [ -n "$ver" ]; then
+		print DKMS "remove ${name}/${ver} (previous)"
+		dkms remove "${name}/${ver}" --all || true
+	fi
+done
 
 print COPY "driver source -> $DKMS_SRC"
 rm -rf "$DKMS_SRC"
