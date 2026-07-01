@@ -36,8 +36,11 @@ fi
 for name in $NAMES; do
 	ver=$(dkms status -m "$name" 2>/dev/null | awk -F'[/,: ]' '{print $2; exit}')
 	if [ -n "$ver" ]; then
-		print DKMS "remove ${name}/${ver} (previous)"
-		dkms remove "${name}/${ver}" --all || true
+		print CLEAN "${name}/${ver}"
+		if ! out=$(dkms remove "${name}/${ver}" --all 2>&1); then
+			print WARN "could not fully remove ${name}/${ver}"
+			printf '%s\n' "$out" >&2
+		fi
 	fi
 done
 
