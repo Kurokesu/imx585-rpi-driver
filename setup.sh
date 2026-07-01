@@ -44,7 +44,7 @@ for name in $NAMES; do
 	if [ -n "$ver" ]; then
 		print CLEAN "${name}/${ver}"
 		if ! out=$(dkms remove "${name}/${ver}" --all 2>&1); then
-			print WARN "could not fully remove ${name}/${ver}"
+			print WARN "could not fully remove ${name}/${ver}" >&2
 			printf '%s\n' "$out" >&2
 		fi
 	fi
