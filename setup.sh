@@ -14,23 +14,41 @@ print() { printf '  %-7s %s\n' "$1" "$2"; }
 PACKAGE_NAME=$(grep '^PACKAGE_NAME=' "$SCRIPT_DIR/dkms.conf" | cut -d'"' -f2)
 VERSION=$(grep '^PACKAGE_VERSION=' "$SCRIPT_DIR/dkms.conf" | cut -d'"' -f2)
 
+echo "Kurokesu Camera Driver Installer"
+
 if [ -z "$PACKAGE_NAME" ] || [ -z "$VERSION" ]; then
-	echo "Error: Failed to read PACKAGE_NAME or PACKAGE_VERSION from dkms.conf"
+	echo "" >&2
+	echo "Error: Failed to read PACKAGE_NAME or PACKAGE_VERSION from dkms.conf" >&2
 	exit 1
 fi
+
+echo "${PACKAGE_NAME} v${VERSION}"
+echo ""
 
 DKMS_SRC="/usr/src/${PACKAGE_NAME}-${VERSION}"
 
 if ! command -v dkms >/dev/null 2>&1; then
-	echo "Error: dkms is not installed. Install it with: sudo apt install -y --no-install-recommends dkms"
+	echo "Error: dkms is not installed. Install with:" >&2
+	echo "    sudo apt install -y --no-install-recommends dkms" >&2
 	exit 1
 fi
 
-OLD_VER=$(dkms status -m "$PACKAGE_NAME" 2>/dev/null | cut -d'/' -f2 | cut -d',' -f1)
-if [ -n "$OLD_VER" ]; then
-	print DKMS "remove ${PACKAGE_NAME}/${OLD_VER} (previous)"
-	dkms remove "${PACKAGE_NAME}/${OLD_VER}" --all || true
+LEGACY_NAME=$(echo "$PACKAGE_NAME" | sed 's/-rpi-/-/')
+NAMES="$PACKAGE_NAME"
+if [ "$LEGACY_NAME" != "$PACKAGE_NAME" ]; then
+	NAMES="$NAMES $LEGACY_NAME"
 fi
+
+for name in $NAMES; do
+	ver=$(dkms status -m "$name" 2>/dev/null | awk -F'[/,: ]' '{print $2; exit}')
+	if [ -n "$ver" ]; then
+		print CLEAN "${name}/${ver}"
+		if ! out=$(dkms remove "${name}/${ver}" --all 2>&1); then
+			print WARN "could not fully remove ${name}/${ver}" >&2
+			printf '%s\n' "$out" >&2
+		fi
+	fi
+done
 
 print COPY "driver source -> $DKMS_SRC"
 rm -rf "$DKMS_SRC"
