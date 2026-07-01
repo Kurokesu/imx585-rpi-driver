@@ -14,10 +14,16 @@ print() { printf '  %-7s %s\n' "$1" "$2"; }
 PACKAGE_NAME=$(grep '^PACKAGE_NAME=' "$SCRIPT_DIR/dkms.conf" | cut -d'"' -f2)
 VERSION=$(grep '^PACKAGE_VERSION=' "$SCRIPT_DIR/dkms.conf" | cut -d'"' -f2)
 
+echo "Kurokesu Camera Driver Installer"
+
 if [ -z "$PACKAGE_NAME" ] || [ -z "$VERSION" ]; then
+	echo "" >&2
 	echo "Error: Failed to read PACKAGE_NAME or PACKAGE_VERSION from dkms.conf" >&2
 	exit 1
 fi
+
+echo "${PACKAGE_NAME} v${VERSION}"
+echo ""
 
 DKMS_SRC="/usr/src/${PACKAGE_NAME}-${VERSION}"
 
