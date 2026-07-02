@@ -11,6 +11,7 @@ imx585-rpi-dkms (0.1.0-1) unstable; urgency=medium
     - imx585 device tree overlay with cam0, 2lane, mono, always-on,
       link-frequency and sync-mode options.
     - Targeting Linux kernel 6.12 or newer.
-    - Validated on Raspberry Pi OS Bookworm and Trixie.
+    - Validated on Raspberry Pi 4 and 5, Raspberry Pi OS Bookworm
+      and Trixie.
 
- -- Danius Kalvaitis <danius@kurokesu.com>  Thu, 02 Jul 2026 20:35:00 +0300
+ -- Danius Kalvaitis <danius@kurokesu.com>  Thu, 02 Jul 2026 21:52:00 +0300
