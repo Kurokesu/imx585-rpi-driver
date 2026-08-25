@@ -8,10 +8,12 @@
 
 Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illuminated CMOS sensor optimised for low-light and 4K applications.
 
-- 2-lane and 4-lane MIPI CSI-2 (up to 1782 Mbps/lane)
+- 2-lane and 4-lane MIPI CSI-2 (up to 2079 Mbps/lane)
 - 10-bit and 12-bit RAW output
-- 3856×2180 @ up to 60 fps, 4-lane 12-bit
-- ClearHDR mode for high-dynamic-range capture
+- 3840×2160 @ 90 fps (10-bit)
+- 3840×2160 @ 70 fps (12-bit)
+- 1920×1080 @ 70 fps (2×2 binning)
+- ClearHDR mode for high-dynamic-range capture, 16-bit or 12-bit compressed
 - Mono variant support
 - Three sync modes for multi-camera setups
 
@@ -92,8 +94,9 @@ Expected output (varies by link frequency and lane configuration):
 Available cameras
 -----------------
 0 : imx585 [3840x2160 12-bit RGGB] (/base/axi/pcie@1000120000/rp1/i2c@80000/imx585@1a)
-    Modes: 'SRGGB12_CSI2P' : 1928x1090 [50.00 fps - (0, 0)/3840x2160 crop]
-                             3856x2180 [43.80 fps - (0, 0)/3840x2160 crop]
+    Modes: 'SRGGB10_CSI2P' : 3840x2160 [43.98 fps - (0, 0)/3840x2160 crop]
+           'SRGGB12_CSI2P' : 1920x1080 [50.00 fps - (0, 0)/1920x1080 crop]
+                             3840x2160 [43.98 fps - (0, 0)/3840x2160 crop]
 ```
 
 Start live preview:
@@ -117,6 +120,7 @@ rpicam-still -o test.jpg
 | [`cam0`](#cam0) | Use cam0 port instead of cam1 | cam1 |
 | [`2lane`](#2lane) | Use 2-lane MIPI CSI-2 | 4 lanes |
 | [`mono`](#mono) | Enable monochrome sensor variant | off |
+| [`ccmp`](#ccmp) | Enable 12-bit compressed ClearHDR output | off |
 | [`always-on`](#always-on) | Keep regulator powered (prevents runtime PM power-off) | off |
 | [`link-frequency=<Hz>`](#link-frequency) | Set MIPI CSI-2 link frequency (Hz) | 720000000 |
 | [`sync-mode=<mode>`](#sync-modes) | Multi-camera synchronization mode | internal-leader |
@@ -148,6 +152,14 @@ For the monochrome sensor variant, append `,mono`:
 dtoverlay=imx585,mono
 ```
 
+### ccmp
+
+ClearHDR outputs 16-bit by default. `ccmp` enables sensor gradation compression, adding a 12-bit ClearHDR format with the same HDR range at a quarter less bandwidth:
+
+```ini
+dtoverlay=imx585,ccmp
+```
+
 ### always-on
 
 `always-on` keeps camera regulator permanently enabled, preventing kernel from powering off the sensor during runtime PM suspend. Useful for debugging hardware issues, since it forces `CAM_GPIO` high constantly.
@@ -166,21 +178,21 @@ To change link frequency, append `,link-frequency=<Hz>`:
 dtoverlay=imx585,link-frequency=891000000
 ```
 
-| Frequency (Hz) | Mbps/lane | Max FPS @ 4K 12-bit 4-lane | Max FPS @ 4K 12-bit 2-lane |
-|---|---|---|---|
-| 297000000 | 594 | 20.8 fps | 10.4 fps |
-| 360000000 | 720 | 25.0 fps | 12.5 fps |
-| 445500000 | 891 | 30.0 fps | 15.0 fps |
-| 594000000 | 1188 | 41.7 fps | 20.8 fps |
-| 720000000 (default) | 1440 | 50.0 fps | 25.0 fps |
-| 891000000 | 1782 | 60.0 fps | 30.0 fps |
-| 1039500000 | 2079 | 75.0 fps | 37.5 fps |
+| Frequency (Hz) | Mbps/lane | Max FPS @ 4K 12-bit 4-lane | Max FPS @ 4K 12-bit 2-lane | Max FPS @ 4K 10-bit 4-lane |
+|---|---|---|---|---|
+| 297000000 | 594 | 20.8 fps | 10.4 fps | 25.0 fps |
+| 360000000 | 720 | 25.0 fps | 12.5 fps | 30.0 fps |
+| 445500000 | 891 | 30.0 fps | 15.0 fps | 30.0 fps |
+| 594000000 | 1188 | 41.7 fps | 20.8 fps | 50.0 fps |
+| 720000000 (default) | 1440 | 50.0 fps | 25.0 fps | 60.0 fps |
+| 891000000 | 1782 | 60.0 fps | 30.0 fps | 60.0 fps |
+| 1039500000 | 2079 | 69.9 fps | 35.0 fps | 90.0 fps |
 
 > [!NOTE]
 > RPi5/RP1 has a 400 Mpix/s processing limit. Without overclocking RP1 (the Camera Frontend), effective framerate is capped at ~43.8 fps @ 4K regardless of the link frequency configured here.
 
 > [!NOTE]
-> ClearHDR halves the framerate. 1080p 2×2 binned mode doubles it.
+> ClearHDR halves these rates and caps at 30.0 fps.
 
 > [!WARNING]
 > The driver also accepts 1188 MHz (2376 Mbps/lane), but RPi4 does not support this rate and RPi5 exhibits frame drops. Not recommended for production use.
