@@ -510,6 +510,7 @@ static const struct cci_reg_sequence common_regs[] = {
 	{ CCI_REG8(0x5224), 0x87 }, { CCI_REG8(0x5226), 0x82 },
 };
 
+/* clang-format off */
 static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	{ CCI_REG8(0x301a), 0x10 }, /* WDMODE: Clear HDR */
 	{ CCI_REG8(0x3024), 0x02 }, /* COMBI_EN: with built-in combination */
@@ -517,8 +518,10 @@ static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	{ CCI_REG8(0x3074), 0x63 },
 	{ CCI_REG8(0x3930), 0xe6 }, /* DUR[15:8] (12-bit) */
 	{ CCI_REG8(0x3931), 0x00 }, /* DUR[7:0]  (12-bit) */
-	{ CCI_REG8(0x3a4c), 0x61 }, { CCI_REG8(0x3a4d), 0x02 },
-	{ CCI_REG8(0x3a50), 0x70 }, { CCI_REG8(0x3a51), 0x02 },
+	{ CCI_REG8(0x3a4c), 0x61 },
+	{ CCI_REG8(0x3a4d), 0x02 },
+	{ CCI_REG8(0x3a50), 0x70 },
+	{ CCI_REG8(0x3a51), 0x02 },
 	{ CCI_REG8(0x3e10), 0x17 }, /* ADTHEN */
 	{ CCI_REG8(0x493c), 0x41 }, /* 10-bit HDR */
 	{ CCI_REG8(0x4940), 0x41 }, /* 12-bit HDR */
@@ -535,9 +538,11 @@ static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	 * the bulk of the output and LG only takes over once HG saturates.
 	 */
 	/* EXP_TH_H = 0x0FFF, HG saturation cutoff */
-	{ CCI_REG8(0x36d0), 0xFF }, { CCI_REG8(0x36d1), 0x0F },
+	{ CCI_REG8(0x36d0), 0xFF },
+	{ CCI_REG8(0x36d1), 0x0F },
 	/* EXP_TH_L = 0x0000, no low cutoff */
-	{ CCI_REG8(0x36d4), 0x00 }, { CCI_REG8(0x36d5), 0x00 },
+	{ CCI_REG8(0x36d4), 0x00 },
+	{ CCI_REG8(0x36d5), 0x00 },
 	/* EXP_BK = HG 1/2, LG 1/2, only used in overlap */
 	{ CCI_REG8(0x36e2), 0x00 },
 	/*
@@ -558,12 +563,15 @@ static const struct cci_reg_sequence common_normal_mode[] = {
 	{ CCI_REG8(0x3074), 0x64 },
 	{ CCI_REG8(0x3930), 0x0c }, /* DUR[15:8] (12-bit) */
 	{ CCI_REG8(0x3931), 0x01 }, /* DUR[7:0]  (12-bit) */
-	{ CCI_REG8(0x3a4c), 0x39 }, { CCI_REG8(0x3a4d), 0x01 },
-	{ CCI_REG8(0x3a50), 0x48 }, { CCI_REG8(0x3a51), 0x01 },
+	{ CCI_REG8(0x3a4c), 0x39 },
+	{ CCI_REG8(0x3a4d), 0x01 },
+	{ CCI_REG8(0x3a50), 0x48 },
+	{ CCI_REG8(0x3a51), 0x01 },
 	{ CCI_REG8(0x3e10), 0x10 }, /* ADTHEN */
 	{ CCI_REG8(0x493c), 0x23 }, /* 10-bit Normal */
 	{ CCI_REG8(0x4940), 0x23 }, /* 12-bit Normal */
 };
+/* clang-format on */
 
 /* All-pixel 4K, 12-bit */
 static const struct cci_reg_sequence mode_4k_regs_12bit[] = {
