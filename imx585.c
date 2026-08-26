@@ -1691,68 +1691,68 @@ static const struct v4l2_ctrl_config imx585_cfg_shr = {
 
 static int imx585_init_controls(struct imx585 *imx585)
 {
-	struct v4l2_ctrl_handler *hdl = &imx585->ctrl_handler;
+	struct v4l2_ctrl_handler *ctrl_hdlr = &imx585->ctrl_handler;
 	struct v4l2_fwnode_device_properties props;
 	int ret;
 
-	ret = v4l2_ctrl_handler_init(hdl, 32);
+	ret = v4l2_ctrl_handler_init(ctrl_hdlr, 32);
 
 	/* Read-only, updated per mode */
-	imx585->pixel_rate = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops,
+	imx585->pixel_rate = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					       V4L2_CID_PIXEL_RATE,
 					       1, UINT_MAX, 1, 1);
 
 	imx585->link_freq =
-		v4l2_ctrl_new_int_menu(hdl, &imx585_ctrl_ops, V4L2_CID_LINK_FREQ,
+		v4l2_ctrl_new_int_menu(ctrl_hdlr, &imx585_ctrl_ops, V4L2_CID_LINK_FREQ,
 				       0, 0, &link_freqs[imx585->link_freq_idx]);
 	if (imx585->link_freq)
 		imx585->link_freq->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 
-	imx585->vblank = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops,
+	imx585->vblank = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					   V4L2_CID_VBLANK, 0, 0xFFFFF, 1, 0);
-	imx585->hblank = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops,
+	imx585->hblank = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					   V4L2_CID_HBLANK, 0, 0xFFFF, 1, 0);
-	imx585->blacklevel = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops,
+	imx585->blacklevel = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					       V4L2_CID_BRIGHTNESS, 0, 0xFFFF, 1,
 					       IMX585_BLKLEVEL_DEFAULT);
 
-	imx585->exposure = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops,
+	imx585->exposure = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					     V4L2_CID_EXPOSURE,
 					     IMX585_EXPOSURE_MIN, IMX585_EXPOSURE_MAX,
 					     IMX585_EXPOSURE_STEP, IMX585_EXPOSURE_DEFAULT);
 
-	imx585->gain = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
+	imx585->gain = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
 					 IMX585_ANA_GAIN_MIN_NORMAL, IMX585_ANA_GAIN_MAX_NORMAL,
 					 IMX585_ANA_GAIN_STEP, IMX585_ANA_GAIN_DEFAULT);
 
-	imx585->hflip = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops,
+	imx585->hflip = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					  V4L2_CID_HFLIP, 0, 1, 1, 0);
-	imx585->vflip = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops,
+	imx585->vflip = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					  V4L2_CID_VFLIP, 0, 1, 1, 0);
 
-	imx585->hdr_mode = v4l2_ctrl_new_std(hdl, &imx585_ctrl_ops,
+	imx585->hdr_mode = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					     V4L2_CID_WIDE_DYNAMIC_RANGE, 0, 1, 1, 0);
-	imx585->datasel_th_ctrl = v4l2_ctrl_new_custom(hdl, &imx585_cfg_datasel_th, NULL);
-	imx585->datasel_bk_ctrl = v4l2_ctrl_new_custom(hdl, &imx585_cfg_datasel_bk, NULL);
-	imx585->gdc_th_ctrl     = v4l2_ctrl_new_custom(hdl, &imx585_cfg_grad_th, NULL);
-	imx585->gdc_exp_ctrl_l  = v4l2_ctrl_new_custom(hdl, &imx585_cfg_grad_exp_l, NULL);
-	imx585->gdc_exp_ctrl_h  = v4l2_ctrl_new_custom(hdl, &imx585_cfg_grad_exp_h, NULL);
-	imx585->hdr_gain_ctrl   = v4l2_ctrl_new_custom(hdl, &imx585_cfg_hdr_gain, NULL);
-	imx585->hcg_ctrl        = v4l2_ctrl_new_custom(hdl, &imx585_cfg_hcg, NULL);
+	imx585->datasel_th_ctrl = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_datasel_th, NULL);
+	imx585->datasel_bk_ctrl = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_datasel_bk, NULL);
+	imx585->gdc_th_ctrl     = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_grad_th, NULL);
+	imx585->gdc_exp_ctrl_l  = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_grad_exp_l, NULL);
+	imx585->gdc_exp_ctrl_h  = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_grad_exp_h, NULL);
+	imx585->hdr_gain_ctrl   = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_hdr_gain, NULL);
+	imx585->hcg_ctrl        = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_hcg, NULL);
 
-	imx585->vmax_ctrl        = v4l2_ctrl_new_custom(hdl, &imx585_cfg_vmax, NULL);
-	imx585->hmax_ctrl        = v4l2_ctrl_new_custom(hdl, &imx585_cfg_hmax, NULL);
-	imx585->shr_ctrl        = v4l2_ctrl_new_custom(hdl, &imx585_cfg_shr, NULL);
+	imx585->vmax_ctrl        = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_vmax, NULL);
+	imx585->hmax_ctrl        = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_hmax, NULL);
+	imx585->shr_ctrl        = v4l2_ctrl_new_custom(ctrl_hdlr, &imx585_cfg_shr, NULL);
 
-	v4l2_ctrl_new_std_menu_items(hdl, &imx585_ctrl_ops,
+	v4l2_ctrl_new_std_menu_items(ctrl_hdlr, &imx585_ctrl_ops,
 				     V4L2_CID_TEST_PATTERN,
 				     ARRAY_SIZE(imx585_tpg_menu) - 1,
 				     0, 0, imx585_tpg_menu);
 
 	imx585_activate_hdr_controls(imx585);
 
-	if (hdl->error) {
-		ret = hdl->error;
+	if (ctrl_hdlr->error) {
+		ret = ctrl_hdlr->error;
 		dev_err(imx585->clientdev, "control init failed (%d)\n", ret);
 		goto err_free;
 	}
@@ -1761,7 +1761,7 @@ static int imx585_init_controls(struct imx585 *imx585)
 	if (ret)
 		goto err_free;
 
-	ret = v4l2_ctrl_new_fwnode_properties(hdl, &imx585_ctrl_ops, &props);
+	ret = v4l2_ctrl_new_fwnode_properties(ctrl_hdlr, &imx585_ctrl_ops, &props);
 	if (ret)
 		goto err_free;
 
@@ -1773,11 +1773,11 @@ static int imx585_init_controls(struct imx585 *imx585)
 
 	imx585->hdr_mode->flags |= V4L2_CTRL_FLAG_UPDATE | V4L2_CTRL_FLAG_MODIFY_LAYOUT;
 
-	imx585->sd.ctrl_handler = hdl;
+	imx585->sd.ctrl_handler = ctrl_hdlr;
 	return 0;
 
 err_free:
-	v4l2_ctrl_handler_free(hdl);
+	v4l2_ctrl_handler_free(ctrl_hdlr);
 	return ret;
 }
 
