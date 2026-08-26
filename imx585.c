@@ -534,17 +534,21 @@ static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	 * TH_L=0). Use the rule-based selection range instead so HG drives
 	 * the bulk of the output and LG only takes over once HG saturates.
 	 */
-	{ CCI_REG8(0x36d0), 0xFF }, { CCI_REG8(0x36d1), 0x0F }, /* EXP_TH_H = 0x0FFF (HG saturation cutoff) */
-	{ CCI_REG8(0x36d4), 0x00 }, { CCI_REG8(0x36d5), 0x00 }, /* EXP_TH_L = 0x0000 (no low cutoff) */
-	{ CCI_REG8(0x36e2), 0x00 },                              /* EXP_BK   = HG 1/2, LG 1/2 (only used in overlap) */
+	/* EXP_TH_H = 0x0FFF, HG saturation cutoff */
+	{ CCI_REG8(0x36d0), 0xFF }, { CCI_REG8(0x36d1), 0x0F },
+	/* EXP_TH_L = 0x0000, no low cutoff */
+	{ CCI_REG8(0x36d4), 0x00 }, { CCI_REG8(0x36d5), 0x00 },
+	/* EXP_BK = HG 1/2, LG 1/2, only used in overlap */
+	{ CCI_REG8(0x36e2), 0x00 },
 	/*
 	 * Spec-valid CCMP gradation-compression slopes (§4.3, page 16). These
 	 * must land in their register's allowed range or the sensor output
 	 * clamps at BLC. ACMP1 (middle segment) must be 06h..0Bh; ACMP2 (high
 	 * segment) must be 00h..05h.
 	 */
-	{ CCI_REG8(0x36ec), 0x04 }, /* ACMP2_EXP = 1/16  (high slope; natural inverse spans 16-bit, no LUT stretch needed) */
-	{ CCI_REG8(0x36ee), 0x06 }, /* ACMP1_EXP = 1/64  (middle slope) */
+	/* ACMP2_EXP = 1/16 high slope, natural inverse spans 16-bit */
+	{ CCI_REG8(0x36ec), 0x04 },
+	{ CCI_REG8(0x36ee), 0x06 }, /* ACMP1_EXP = 1/64 middle slope */
 };
 
 static const struct cci_reg_sequence common_normal_mode[] = {
@@ -1023,11 +1027,13 @@ static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 			*num_modes = 1;
 			break;
 
-		/* 12-bit. Per AppNote §2 page 6, the 1920×1080 binning mode in
+		/*
+		 * 12-bit. Per AppNote §2 page 6, the 1920×1080 binning mode in
 		 * Clear HDR only supports 16-bit output — 12-bit binned HDR is
 		 * not a valid sensor configuration and the part returns BLC if
 		 * asked. Skip the binning entry (index 0) when WDR=1, leaving
-		 * only the 4K all-pixel mode at index 1. */
+		 * only the 4K all-pixel mode at index 1.
+		 */
 		case MEDIA_BUS_FMT_SRGGB12_1X12:
 		case MEDIA_BUS_FMT_SGRBG12_1X12:
 		case MEDIA_BUS_FMT_SGBRG12_1X12:
@@ -1947,15 +1953,18 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 	if (imx585->sync_mode == SYNC_INT_FOLLOWER) {
 		dev_info(imx585->clientdev, "Internal sync follower: XVS input\n");
 		ret = cci_write(imx585->regmap, IMX585_REG_EXTMODE, 0x01, NULL);
+		/* XHS out, XVS in */
 		if (!ret)
-			ret = cci_write(imx585->regmap, IMX585_REG_XXS_DRV, 0x03, NULL); /* XHS out, XVS in */
+			ret = cci_write(imx585->regmap, IMX585_REG_XXS_DRV, 0x03, NULL);
+		/* Disable XVS OUT */
 		if (!ret)
-			ret = cci_write(imx585->regmap, IMX585_REG_XXS_OUTSEL, 0x08, NULL); /* disable XVS OUT */
+			ret = cci_write(imx585->regmap, IMX585_REG_XXS_OUTSEL, 0x08, NULL);
 	} else if (imx585->sync_mode == SYNC_INT_LEADER) {
 		dev_info(imx585->clientdev, "Internal sync leader: XVS/XHS output\n");
 		ret = cci_write(imx585->regmap, IMX585_REG_EXTMODE, 0x00, NULL);
+		/* XHS/XVS out */
 		if (!ret)
-			ret = cci_write(imx585->regmap, IMX585_REG_XXS_DRV, 0x00, NULL); /* XHS/XVS out */
+			ret = cci_write(imx585->regmap, IMX585_REG_XXS_DRV, 0x00, NULL);
 		if (!ret)
 			ret = cci_write(imx585->regmap, IMX585_REG_XXS_OUTSEL, 0x0A, NULL);
 	} else {
