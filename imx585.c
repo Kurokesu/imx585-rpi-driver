@@ -1370,11 +1370,12 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 		}
 		break;
 	case V4L2_CID_IMX585_HCG_GAIN:
-		if (!imx585->clear_hdr) {
-			imx585->hcg = ctrl->val;
-			imx585_update_gain_limits(imx585);
-			dev_info(imx585->clientdev, "HCG=%u\n", ctrl->val);
-		}
+		if (imx585->clear_hdr)
+			break;
+
+		imx585->hcg = ctrl->val;
+		imx585_update_gain_limits(imx585);
+		dev_info(imx585->clientdev, "HCG=%u\n", ctrl->val);
 		break;
 	default:
 		break;
@@ -1397,13 +1398,14 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	}
 	case V4L2_CID_IMX585_HCG_GAIN:
-		if (!imx585->clear_hdr) {
-			ret = cci_write(imx585->regmap, IMX585_REG_FDG_SEL0, ctrl->val, NULL);
-			if (ret)
-				dev_err_ratelimited(imx585->clientdev,
-						    "FDG_SEL0 write failed (%d)\n", ret);
-			dev_info(imx585->clientdev, "HCG write reg=%u\n", ctrl->val);
-		}
+		if (imx585->clear_hdr)
+			break;
+
+		ret = cci_write(imx585->regmap, IMX585_REG_FDG_SEL0, ctrl->val, NULL);
+		if (ret)
+			dev_err_ratelimited(imx585->clientdev,
+					    "FDG_SEL0 write failed (%d)\n", ret);
+		dev_info(imx585->clientdev, "HCG write reg=%u\n", ctrl->val);
 		break;
 	case V4L2_CID_ANALOGUE_GAIN:
 		dev_info(imx585->clientdev, "ANALOG_GAIN=%u (%s)\n",
