@@ -863,7 +863,6 @@ struct imx585 {
 
 	/* Controls */
 	struct v4l2_ctrl *pixel_rate;
-	struct v4l2_ctrl *link_freq;
 	struct v4l2_ctrl *exposure;
 	struct v4l2_ctrl *gain;
 	struct v4l2_ctrl *hcg_ctrl;
@@ -1704,6 +1703,7 @@ static int imx585_init_controls(struct imx585 *imx585)
 {
 	struct v4l2_ctrl_handler *ctrl_hdlr = &imx585->ctrl_handler;
 	struct v4l2_fwnode_device_properties props;
+	struct v4l2_ctrl *ctrl;
 	int ret;
 
 	ret = v4l2_ctrl_handler_init(ctrl_hdlr, 32);
@@ -1713,11 +1713,11 @@ static int imx585_init_controls(struct imx585 *imx585)
 					       V4L2_CID_PIXEL_RATE,
 					       1, UINT_MAX, 1, 1);
 
-	imx585->link_freq =
-		v4l2_ctrl_new_int_menu(ctrl_hdlr, &imx585_ctrl_ops, V4L2_CID_LINK_FREQ,
-				       0, 0, &link_freqs[imx585->link_freq_idx]);
-	if (imx585->link_freq)
-		imx585->link_freq->flags |= V4L2_CTRL_FLAG_READ_ONLY;
+	ctrl = v4l2_ctrl_new_int_menu(ctrl_hdlr, &imx585_ctrl_ops,
+				      V4L2_CID_LINK_FREQ, 0, 0,
+				      &link_freqs[imx585->link_freq_idx]);
+	if (ctrl)
+		ctrl->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 
 	imx585->vblank = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					   V4L2_CID_VBLANK, 0, 0xFFFFF, 1, 0);
