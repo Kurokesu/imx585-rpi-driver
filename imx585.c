@@ -598,7 +598,7 @@ static const struct cci_reg_sequence mode_1080_regs_12bit[] = {
 /*
  * All-pixel 4K, 16-bit ClearHDR. Same as the 12-bit table, but pairs
  * with win_crop_regs_16bit and MDBIT is overridden to 0x03 (RAW16) at
- * runtime in start_streaming.
+ * runtime in imx585_enable_streams.
  */
 static const struct cci_reg_sequence mode_4k_regs_16bit[] = {
 	{ CCI_REG8(0x301b), 0x00 }, /* ADDMODE non-binning */
@@ -2282,7 +2282,7 @@ static int imx585_get_selection(struct v4l2_subdev *sd,
 	case V4L2_SEL_TGT_CROP_DEFAULT:
 		/*
 		 * Active recording area = buffer dimensions, since the sensor
-		 * is configured (via WINMODE crop, see IMX585_WIN_CROP_REGS_*)
+		 * is configured (via WINMODE crop, see win_crop_regs_*)
 		 * to skip OB rows/cols at readout. Buffer holds active pixels
 		 * only.
 		 */
