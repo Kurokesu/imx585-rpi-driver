@@ -988,6 +988,23 @@ static void imx585_activate_hdr_controls(struct imx585 *imx585)
 	v4l2_ctrl_activate(imx585->hcg_ctrl, !clear_hdr);
 }
 
+static void imx585_select_12bit_modes(struct imx585 *imx585,
+				      const struct imx585_mode **mode_list,
+				      unsigned int *num_modes)
+{
+	if (!imx585->clear_hdr) {
+		*mode_list = supported_modes; /* binned + 4K 12-bit */
+		*num_modes = 2;
+		return;
+	}
+
+	/* Clear HDR 12-bit is only valid with gradation compression */
+	if (imx585->clearhdr_ccmp) {
+		*mode_list = &supported_modes[IMX585_MODE_4K_12BIT];
+		*num_modes = 1;
+	}
+}
+
 static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 				  const struct imx585_mode **mode_list,
 				  unsigned int *num_modes)
@@ -1005,15 +1022,7 @@ static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 			*mode_list = &supported_modes[IMX585_MODE_4K_16BIT_HDR];
 			*num_modes = 1;
 		} else if (code == MEDIA_BUS_FMT_Y12_1X12) {
-			if (imx585->clear_hdr) {
-				if (imx585->clearhdr_ccmp) {
-					*mode_list = &supported_modes[IMX585_MODE_4K_12BIT];
-					*num_modes = 1;
-				}
-			} else {
-				*mode_list = supported_modes;     /* binned + 4K 12-bit */
-				*num_modes = 2;
-			}
+			imx585_select_12bit_modes(imx585, mode_list, num_modes);
 		} else if (code == MEDIA_BUS_FMT_Y10_1X10 && !imx585->clear_hdr) {
 			*mode_list = supported_10bit_modes;   /* 4K 10-bit */
 			*num_modes = ARRAY_SIZE(supported_10bit_modes);
@@ -1046,15 +1055,7 @@ static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 		case MEDIA_BUS_FMT_SGRBG12_1X12:
 		case MEDIA_BUS_FMT_SGBRG12_1X12:
 		case MEDIA_BUS_FMT_SBGGR12_1X12:
-			if (imx585->clear_hdr) {
-				if (imx585->clearhdr_ccmp) {
-					*mode_list = &supported_modes[IMX585_MODE_4K_12BIT];
-					*num_modes = 1;
-				}
-			} else {
-				*mode_list = supported_modes;         /* binned + 4K */
-				*num_modes = 2;                       /* exclude 16-bit entry */
-			}
+			imx585_select_12bit_modes(imx585, mode_list, num_modes);
 			break;
 		case MEDIA_BUS_FMT_SRGGB10_1X10:
 		case MEDIA_BUS_FMT_SGRBG10_1X10:
