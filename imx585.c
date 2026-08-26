@@ -573,6 +573,7 @@ static const struct cci_reg_sequence common_normal_mode[] = {
 	{ CCI_REG8(0x493c), 0x23 }, /* 10-bit Normal */
 	{ CCI_REG8(0x4940), 0x23 }, /* 12-bit Normal */
 };
+
 /* clang-format on */
 
 /* All-pixel 4K, 12-bit */
