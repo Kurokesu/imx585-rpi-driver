@@ -131,10 +131,10 @@
 #define IMX585_SHR_MAX                  0xfffff
 
 /* Exposure control (lines) */
-#define IMX585_EXPOSURE_MIN             2
-#define IMX585_EXPOSURE_STEP            1
-#define IMX585_EXPOSURE_DEFAULT         1000
-#define IMX585_EXPOSURE_MAX             49865
+#define IMX585_EXP_MIN                  2
+#define IMX585_EXP_STEP                 1
+#define IMX585_EXP_DEFAULT              1000
+#define IMX585_EXP_MAX                  49865
 
 /* HDR threshold / blending / compression */
 #define IMX585_REG_EXP_TH_H             CCI_REG16_LE(0x36d0)
@@ -158,9 +158,9 @@
 /* Analog gain control */
 #define IMX585_REG_ANALOG_GAIN          CCI_REG16_LE(0x306c)
 #define IMX585_REG_FDG_SEL0             CCI_REG8(0x3030)
-#define IMX585_ANA_GAIN_MIN_NORMAL      0
-#define IMX585_ANA_GAIN_MIN_HCG         34
-#define IMX585_ANA_GAIN_MAX_NORMAL      240
+#define IMX585_GAIN_MIN_LCG             0
+#define IMX585_GAIN_MIN_HCG             34
+#define IMX585_GAIN_MAX_SDR             240
 /*
  * AppNote page 5 "List of Setting Register": GAIN range is 00h..50h
  * (0..80 decimal) — covers all modes including Clear HDR. The §5 page
@@ -169,9 +169,9 @@
  * register 57. Use 80 here as the absolute register cap (the IPA owns
  * the per-mode tuning of the actual usable range above 57 if it cares).
  */
-#define IMX585_ANA_GAIN_MAX_HDR         80
-#define IMX585_ANA_GAIN_STEP            1
-#define IMX585_ANA_GAIN_DEFAULT         0
+#define IMX585_GAIN_MAX_HDR             80
+#define IMX585_GAIN_STEP                1
+#define IMX585_GAIN_DEFAULT             0
 
 /* Flip */
 #define IMX585_FLIP_WINMODEH            CCI_REG8(0x3020)
@@ -1216,11 +1216,11 @@ static void imx585_update_gain_limits(struct imx585 *imx585)
 {
 	const bool hcg_on = imx585->hcg;
 	const bool clear_hdr = imx585->clear_hdr;
-	const u32 min = hcg_on ? IMX585_ANA_GAIN_MIN_HCG : IMX585_ANA_GAIN_MIN_NORMAL;
-	const u32 max = clear_hdr ? IMX585_ANA_GAIN_MAX_HDR : IMX585_ANA_GAIN_MAX_NORMAL;
+	const u32 min = hcg_on ? IMX585_GAIN_MIN_HCG : IMX585_GAIN_MIN_LCG;
+	const u32 max = clear_hdr ? IMX585_GAIN_MAX_HDR : IMX585_GAIN_MAX_SDR;
 	u32 cur = imx585->gain->val;
 
-	__v4l2_ctrl_modify_range(imx585->gain, min, max, IMX585_ANA_GAIN_STEP,
+	__v4l2_ctrl_modify_range(imx585->gain, min, max, IMX585_GAIN_STEP,
 				 clamp(cur, min, max));
 
 	if (cur < min || cur > max)
@@ -1308,9 +1308,9 @@ static void imx585_set_framing_limits(struct imx585 *imx585,
 				 1, mode->min_vmax - mode->height);
 	__v4l2_ctrl_s_ctrl(imx585->vblank, mode->min_vmax - mode->height);
 
-	__v4l2_ctrl_modify_range(imx585->exposure, IMX585_EXPOSURE_MIN,
+	__v4l2_ctrl_modify_range(imx585->exposure, IMX585_EXP_MIN,
 				 imx585->vmax - IMX585_SHR_MIN_HDR, 1,
-				 IMX585_EXPOSURE_DEFAULT);
+				 IMX585_EXP_DEFAULT);
 
 	dev_info(imx585->clientdev, "Framing: VMAX=%u HMAX=%u pixel_rate=%llu\n",
 		 imx585->vmax, imx585->hmax, pixel_rate);
@@ -1422,9 +1422,9 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 		imx585->vmax = (mode->height + ctrl->val) & ~1U;
 
 		current_exposure = clamp_t(u32, current_exposure,
-					   IMX585_EXPOSURE_MIN, imx585->vmax - min_shr);
+					   IMX585_EXP_MIN, imx585->vmax - min_shr);
 		__v4l2_ctrl_modify_range(imx585->exposure,
-					 IMX585_EXPOSURE_MIN, imx585->vmax - min_shr, 1,
+					 IMX585_EXP_MIN, imx585->vmax - min_shr, 1,
 					 current_exposure);
 
 		dev_info(imx585->clientdev, "VBLANK=%u -> VMAX=%u\n", ctrl->val, imx585->vmax);
@@ -1731,12 +1731,12 @@ static int imx585_init_controls(struct imx585 *imx585)
 
 	imx585->exposure = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					     V4L2_CID_EXPOSURE,
-					     IMX585_EXPOSURE_MIN, IMX585_EXPOSURE_MAX,
-					     IMX585_EXPOSURE_STEP, IMX585_EXPOSURE_DEFAULT);
+					     IMX585_EXP_MIN, IMX585_EXP_MAX,
+					     IMX585_EXP_STEP, IMX585_EXP_DEFAULT);
 
 	imx585->gain = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
-					 IMX585_ANA_GAIN_MIN_NORMAL, IMX585_ANA_GAIN_MAX_NORMAL,
-					 IMX585_ANA_GAIN_STEP, IMX585_ANA_GAIN_DEFAULT);
+					 IMX585_GAIN_MIN_LCG, IMX585_GAIN_MAX_SDR,
+					 IMX585_GAIN_STEP, IMX585_GAIN_DEFAULT);
 
 	imx585->hflip = v4l2_ctrl_new_std(ctrl_hdlr, &imx585_ctrl_ops,
 					  V4L2_CID_HFLIP, 0, 1, 1, 0);
