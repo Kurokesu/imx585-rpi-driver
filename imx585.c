@@ -362,6 +362,11 @@ static const char * const sync_mode_menu[] = {
 	"Follower Mode",
 };
 
+struct imx585_reg_list {
+	unsigned int num_of_regs;
+	const struct cci_reg_sequence *regs;
+};
+
 /* Mode description */
 struct imx585_mode {
 	unsigned int width;
@@ -374,10 +379,8 @@ struct imx585_mode {
 
 	struct v4l2_rect crop;
 
-	struct {
-		unsigned int num_of_regs;
-		const struct cci_reg_sequence *regs;
-	} reg_list;
+	struct imx585_reg_list reg_list;
+	struct imx585_reg_list win_crop;
 };
 
 /* --------------------------------------------------------------------------
@@ -558,49 +561,12 @@ static const struct cci_reg_sequence common_normal_mode[] = {
 	{ CCI_REG8(0x4940), 0x23 }, /* 12-bit Normal */
 };
 
-/*
- * Window-crop registers — PIX_VST=12 lands the cropping window at the H8
- * recording top (skipping H6 ignored=4 + H7 margin=8 = 12 lines per
- * AppNote ClearHDR §3). PIX_HST=8 is the equivalent horizontal margin.
- *
- * Two PIX_VWIDTH variants exist:
- *
- *  - 12-bit mode (SDR + ClearHDR-12 CCMP): PIX_VWIDTH = 2160 = active
- *    recording height. Sensor outputs PIX_VWIDTH rows (no OB), buffer
- *    is exactly the recording area — pisp.cpp's centered-aspect crop
- *    falls at offset 0 with no OB to leak.
- *
- *  - 16-bit ClearHDR: the sensor PRE-pends 20 OB rows in this format
- *    regardless of WINMODE (the cropping suppresses OB for COMP1/RAW12
- *    but not for RAW16 — likely because the CFE accepts every CSI2 DT
- *    when csi_dt=0 and the sensor uses a different DT for OB). To make
- *    pisp.cpp's centered crop land cleanly on the recording area, we
- *    extend PIX_VWIDTH to 2180 so the sensor emits 20 OB + 2180 = 2200
- *    rows, the buffer dim is advertised as 2200, and the centered
- *    aspect crop offset is (2200-2160)/2 = 20 — exactly the OB count.
- *    The extra 20 PIX_VWIDTH rows past H8 read into H9 margin (8) +
- *    H10 (1) + start of vertical blanking, which the BE crop discards
- *    along with the OB.
- */
-#define IMX585_WIN_CROP_REGS_COMMON \
-	{ IMX585_REG_WINMODE,    IMX585_WINMODE_CROP }, \
-	{ IMX585_REG_PIX_HST,    8    }, /* skip H-margin   */ \
-	{ IMX585_REG_PIX_HWIDTH, 3840 }, /* active width    */ \
-	{ IMX585_REG_PIX_VST,    12   }  /* H6 + H7         */
-#define IMX585_WIN_CROP_REGS_12BIT \
-	IMX585_WIN_CROP_REGS_COMMON, \
-	{ IMX585_REG_PIX_VWIDTH, 2160 }  /* active height   */
-#define IMX585_WIN_CROP_REGS_16BIT \
-	IMX585_WIN_CROP_REGS_COMMON, \
-	{ IMX585_REG_PIX_VWIDTH, 2180 }  /* active + 20 to compensate for OB prepend */
-
 /* All-pixel 4K, 12-bit */
 static const struct cci_reg_sequence mode_4k_regs_12bit[] = {
 	{ CCI_REG8(0x301b), 0x00 }, /* ADDMODE non-binning */
 	{ CCI_REG8(0x3022), 0x02 }, /* ADBIT 12-bit */
 	{ IMX585_REG_MDBIT, 0x01 }, /* MDBIT 12-bit */
 	{ CCI_REG8(0x30d5), 0x04 }, /* DIG_CLP_VSTART non-binning */
-	IMX585_WIN_CROP_REGS_12BIT,
 };
 
 /* All-pixel 4K, 10-bit */
@@ -611,7 +577,6 @@ static const struct cci_reg_sequence mode_4k_regs_10bit[] = {
 	{ CCI_REG8(0x30d5), 0x04 }, /* DIG_CLP_VSTART non-binning */
 	{ CCI_REG8(0x3930), 0x66 }, /* DUR[15:8] (10-bit) */
 	{ CCI_REG8(0x3931), 0x00 }, /* DUR[7:0]  (10-bit) */
-	IMX585_WIN_CROP_REGS_12BIT,
 };
 
 /* 2x2 binned 1080p, 12-bit */
@@ -620,23 +585,56 @@ static const struct cci_reg_sequence mode_1080_regs_12bit[] = {
 	{ CCI_REG8(0x3022), 0x02 }, /* ADBIT 12-bit */
 	{ IMX585_REG_MDBIT, 0x01 }, /* MDBIT 12-bit */
 	{ CCI_REG8(0x30d5), 0x02 }, /* DIG_CLP_VSTART binning */
-	IMX585_WIN_CROP_REGS_12BIT,
 };
 
 /*
- * All-pixel 4K, 16-bit ClearHDR. Identical to the 12-bit table except
- * PIX_VWIDTH is bumped to 2180 — see comment on IMX585_WIN_CROP_REGS_16BIT
- * for the rationale (compensates for the 20 OB rows the sensor prepends
- * in 16-bit RAW16 output, so pisp.cpp's centered crop lands at offset 20
- * and skips them cleanly). MDBIT is overridden to 0x03 (RAW16) at runtime
- * in start_streaming.
+ * All-pixel 4K, 16-bit ClearHDR. Same as the 12-bit table, but pairs
+ * with win_crop_regs_16bit and MDBIT is overridden to 0x03 (RAW16) at
+ * runtime in start_streaming.
  */
 static const struct cci_reg_sequence mode_4k_regs_16bit[] = {
 	{ CCI_REG8(0x301b), 0x00 }, /* ADDMODE non-binning */
 	{ CCI_REG8(0x3022), 0x02 }, /* ADBIT 12-bit */
 	{ IMX585_REG_MDBIT, 0x01 }, /* MDBIT 12-bit (overridden to 0x03 at runtime) */
 	{ CCI_REG8(0x30d5), 0x04 }, /* DIG_CLP_VSTART non-binning */
-	IMX585_WIN_CROP_REGS_16BIT,
+};
+
+/*
+ * Window-crop registers, written straight after the mode table above.
+ * PIX_VST=12 lands the cropping window at the H8 recording top (skipping
+ * H6 ignored=4 + H7 margin=8 = 12 lines per AppNote ClearHDR §3).
+ * PIX_HST=8 is the equivalent horizontal margin.
+ *
+ * PIX_VWIDTH = 2160 = active recording height. Sensor outputs PIX_VWIDTH
+ * rows and no OB, so the buffer is exactly the recording area and
+ * pisp.cpp's centered-aspect crop falls at offset 0 with no OB to leak.
+ */
+static const struct cci_reg_sequence win_crop_regs_12bit[] = {
+	{ IMX585_REG_WINMODE, IMX585_WINMODE_CROP },
+	{ IMX585_REG_PIX_HST, 8 }, /* skip H-margin */
+	{ IMX585_REG_PIX_HWIDTH, 3840 }, /* active width */
+	{ IMX585_REG_PIX_VST, 12 }, /* H6 + H7 */
+	{ IMX585_REG_PIX_VWIDTH, 2160 }, /* active height */
+};
+
+/*
+ * In 16-bit ClearHDR the sensor prepends 20 OB rows regardless of
+ * WINMODE. Cropping suppresses OB for COMP1/RAW12 but not for RAW16,
+ * likely because the CFE accepts every CSI2 DT when csi_dt=0 and the
+ * sensor uses a different DT for OB. To make pisp.cpp's centered crop
+ * land cleanly on the recording area, PIX_VWIDTH extends to 2180 so the
+ * sensor emits 20 OB + 2180 = 2200 rows, the buffer dim is advertised as
+ * 2200, and the centered aspect crop offset is (2200-2160)/2 = 20,
+ * exactly the OB count. The extra 20 rows past H8 read into H9 margin
+ * (8) + H10 (1) + start of vertical blanking, which the BE crop discards
+ * along with the OB.
+ */
+static const struct cci_reg_sequence win_crop_regs_16bit[] = {
+	{ IMX585_REG_WINMODE, IMX585_WINMODE_CROP },
+	{ IMX585_REG_PIX_HST, 8 }, /* skip H-margin */
+	{ IMX585_REG_PIX_HWIDTH, 3840 }, /* active width */
+	{ IMX585_REG_PIX_VST, 12 }, /* H6 + H7 */
+	{ IMX585_REG_PIX_VWIDTH, 2180 }, /* active + 20 for the OB prepend */
 };
 
 /* --------------------------------------------------------------------------
@@ -700,6 +698,10 @@ static struct imx585_mode supported_modes[] = {
 			.num_of_regs = ARRAY_SIZE(mode_1080_regs_12bit),
 			.regs = mode_1080_regs_12bit,
 		},
+		.win_crop = {
+			.num_of_regs = ARRAY_SIZE(win_crop_regs_12bit),
+			.regs = win_crop_regs_12bit,
+		},
 	},
 	{
 		/* 4K60 all-pixel, 12-bit (SDR + ClearHDR-12 CCMP) */
@@ -718,6 +720,10 @@ static struct imx585_mode supported_modes[] = {
 		.reg_list = {
 			.num_of_regs = ARRAY_SIZE(mode_4k_regs_12bit),
 			.regs = mode_4k_regs_12bit,
+		},
+		.win_crop = {
+			.num_of_regs = ARRAY_SIZE(win_crop_regs_12bit),
+			.regs = win_crop_regs_12bit,
 		},
 	},
 	{
@@ -745,6 +751,10 @@ static struct imx585_mode supported_modes[] = {
 			.num_of_regs = ARRAY_SIZE(mode_4k_regs_16bit),
 			.regs = mode_4k_regs_16bit,
 		},
+		.win_crop = {
+			.num_of_regs = ARRAY_SIZE(win_crop_regs_16bit),
+			.regs = win_crop_regs_16bit,
+		},
 	},
 };
 
@@ -766,6 +776,10 @@ static struct imx585_mode supported_10bit_modes[] = {
 		.reg_list = {
 			.num_of_regs = ARRAY_SIZE(mode_4k_regs_10bit),
 			.regs = mode_4k_regs_10bit,
+		},
+		.win_crop = {
+			.num_of_regs = ARRAY_SIZE(win_crop_regs_12bit),
+			.regs = win_crop_regs_12bit,
 		},
 	},
 };
@@ -1962,6 +1976,13 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 				  mode->reg_list.num_of_regs, NULL);
 	if (ret) {
 		dev_err(imx585->clientdev, "Failed to write mode registers\n");
+		goto err_rpm_put;
+	}
+
+	ret = cci_multi_reg_write(imx585->regmap, mode->win_crop.regs,
+				  mode->win_crop.num_of_regs, NULL);
+	if (ret) {
+		dev_err(imx585->clientdev, "Failed to write window crop registers\n");
 		goto err_rpm_put;
 	}
 
