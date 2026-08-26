@@ -510,7 +510,7 @@ static const struct cci_reg_sequence common_regs[] = {
 	{ CCI_REG8(0x5224), 0x87 }, { CCI_REG8(0x5226), 0x82 },
 };
 
-static const struct cci_reg_sequence common_clearHDR_mode[] = {
+static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	{ CCI_REG8(0x301a), 0x10 }, /* WDMODE: Clear HDR */
 	{ CCI_REG8(0x3024), 0x02 }, /* COMBI_EN: with built-in combination */
 	{ CCI_REG8(0x3069), 0x02 },
@@ -1987,8 +1987,8 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 	}
 
 	if (imx585->clear_hdr) {
-		ret = cci_multi_reg_write(imx585->regmap, common_clearHDR_mode,
-					  ARRAY_SIZE(common_clearHDR_mode), NULL);
+		ret = cci_multi_reg_write(imx585->regmap, common_clearhdr_mode,
+					  ARRAY_SIZE(common_clearhdr_mode), NULL);
 		if (ret) {
 			dev_err(imx585->clientdev, "Failed to set ClearHDR regs\n");
 			goto err_rpm_put;
