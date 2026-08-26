@@ -2,6 +2,10 @@
 /*
  * A V4L2 driver for Sony IMX585 camera.
  *
+ * Copyright (C) 2024-2026 Will Whang
+ *
+ * Based on the Sony IMX477 driver
+ * Copyright (C) 2019-2020 Raspberry Pi (Trading) Ltd
  */
 
 #include <linux/clk.h>
