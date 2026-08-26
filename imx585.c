@@ -1234,7 +1234,7 @@ static void imx585_update_hmax(struct imx585 *imx585)
 	const u32 hdr_scale  = imx585->clear_hdr ? 2 : 1;
 	unsigned int i;
 
-	dev_info(imx585->clientdev, "Update minimum HMAX: link_freq=%llu lane_scale=%u hdr_scale=%u\n",
+	dev_info(imx585->clientdev, "Minimum HMAX: link_freq=%llu lane_scale=%u hdr_scale=%u\n",
 		 link_freqs[imx585->link_freq_idx], lane_scale, hdr_scale);
 
 	for (i = 0; i < ARRAY_SIZE(supported_modes); ++i) {
@@ -2372,7 +2372,7 @@ static int imx585_probe(struct i2c_client *client)
 	dev_info(dev, "Reading dtoverlay config:\n");
 	imx585->mono = of_property_read_bool(dev->of_node, "mono-mode");
 	if (imx585->mono)
-		dev_info(dev, "Mono Mode Selected, make sure you have the correct sensor variant\n");
+		dev_info(dev, "Mono mode selected, check sensor variant\n");
 	imx585->clearhdr_ccmp = of_property_read_bool(dev->of_node,
 						      "sony,clearhdr-ccmp");
 	dev_info(dev, "ClearHDR 12-bit CCMP: %s\n",
