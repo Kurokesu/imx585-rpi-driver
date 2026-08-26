@@ -397,8 +397,10 @@ static const struct cci_reg_sequence common_regs[] = {
 	{ CCI_REG8(0x30a6), 0x00 }, /* XVS_DRV [1:0] Hi-Z */
 	{ CCI_REG8(0x3081), 0x00 }, /* EXP_GAIN reset */
 	{ CCI_REG8(0x303a), 0x03 }, /* Disable embedded data */
+};
 
-	/* The remaining blocks are datasheet-recommended settings */
+/* Recommended manufacturer settings */
+static const struct cci_reg_sequence common_regs_mfr[] = {
 	{ CCI_REG8(0x3460), 0x21 }, { CCI_REG8(0x3478), 0xa1 },
 	{ CCI_REG8(0x347c), 0x01 }, { CCI_REG8(0x3480), 0x01 },
 	{ CCI_REG8(0x3a4e), 0x14 }, { CCI_REG8(0x3a52), 0x14 },
@@ -1934,6 +1936,9 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 
 	ret = cci_multi_reg_write(imx585->regmap, common_regs,
 				  ARRAY_SIZE(common_regs), NULL);
+	if (!ret)
+		ret = cci_multi_reg_write(imx585->regmap, common_regs_mfr,
+					  ARRAY_SIZE(common_regs_mfr), NULL);
 	if (ret) {
 		dev_err(imx585->clientdev, "Failed to write common settings\n");
 		goto err_rpm_put;
