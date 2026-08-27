@@ -124,7 +124,7 @@ rpicam-still -o test.jpg
 | [`ccmp`](#ccmp) | Enable 12-bit compressed Clear HDR output | off |
 | [`always-on`](#always-on) | Keep regulator powered (prevents runtime PM power-off) | off |
 | [`link-frequency=<Hz>`](#link-frequency) | Set MIPI CSI-2 link frequency (Hz) | 720000000 |
-| [`sync-mode=<mode>`](#sync-modes) | Multi-camera synchronization mode | internal-leader |
+| [`sync-mode=<mode>`](#sync-mode) | Multi-camera synchronization mode | internal-leader |
 
 ### cam0
 
@@ -196,11 +196,11 @@ dtoverlay=imx585,link-frequency=891000000
 > Clear HDR halves these rates and caps at 30.0 fps.
 
 > [!WARNING]
-> The driver also accepts 1188 MHz (2376 Mbps/lane), but RPi4 does not support this rate and RPi5 exhibits frame drops. Not recommended for production use.
+> 1188 MHz (2376 Mbps/lane) is also accepted, but RPi4 does not support this rate and RPi5 exhibits frame drops. Not recommended for production use.
 
-### Sync modes
+### sync-mode
 
-The driver exposes three sync modes for multi-camera setups, selectable via the `sync-mode` overlay option:
+IMX585 supports three sync modes for multi-camera setups:
 
 | Mode | Description |
 |---|---|
