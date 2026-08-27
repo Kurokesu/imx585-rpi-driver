@@ -26,11 +26,6 @@
 #include <media/v4l2-fwnode.h>
 #include <media/v4l2-mediabus.h>
 
-/* --------------------------------------------------------------------------
- * Driver-local custom controls
- * --------------------------------------------------------------------------
- */
-
 #ifndef V4L2_CID_USER_IMX585_BASE
 #define V4L2_CID_USER_IMX585_BASE (V4L2_CID_USER_BASE + 0x2000)
 #endif
@@ -45,11 +40,6 @@
 #define V4L2_CID_IMX585_VMAX (V4L2_CID_USER_IMX585_BASE + 7)
 #define V4L2_CID_IMX585_HMAX (V4L2_CID_USER_IMX585_BASE + 8)
 #define V4L2_CID_IMX585_SHR (V4L2_CID_USER_IMX585_BASE + 9)
-
-/* --------------------------------------------------------------------------
- * Registers / limits
- * --------------------------------------------------------------------------
- */
 
 /* Standby or streaming mode */
 #define IMX585_REG_MODE_SELECT CCI_REG8(0x3000)
@@ -375,11 +365,6 @@ struct imx585_mode {
 	struct imx585_reg_list reg_list;
 	struct imx585_reg_list win_crop;
 };
-
-/* --------------------------------------------------------------------------
- * Register tables
- * --------------------------------------------------------------------------
- */
 
 static const struct cci_reg_sequence common_regs[] = {
 	{ CCI_REG8(0x3002), 0x01 },
@@ -827,11 +812,6 @@ static const char *const imx585_supply_name[] = {
 };
 
 #define IMX585_NUM_SUPPLIES ARRAY_SIZE(imx585_supply_name)
-
-/* --------------------------------------------------------------------------
- * State
- * --------------------------------------------------------------------------
- */
 
 struct imx585 {
 	struct v4l2_subdev sd;
@@ -1309,11 +1289,6 @@ static void imx585_set_framing_limits(struct imx585 *imx585,
 		 "Framing: VMAX=%u HMAX=%u pixel_rate=%llu\n", imx585->vmax,
 		 imx585->hmax, pixel_rate);
 }
-
-/* --------------------------------------------------------------------------
- * Controls
- * --------------------------------------------------------------------------
- */
 
 static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 {
@@ -1858,11 +1833,6 @@ static void imx585_free_controls(struct imx585 *imx585)
 	v4l2_ctrl_handler_free(imx585->sd.ctrl_handler);
 }
 
-/* --------------------------------------------------------------------------
- * Pad ops / formats
- * --------------------------------------------------------------------------
- */
-
 static int imx585_enum_mbus_code(struct v4l2_subdev *sd,
 				 struct v4l2_subdev_state *sd_state,
 				 struct v4l2_subdev_mbus_code_enum *code)
@@ -1968,11 +1938,6 @@ static int imx585_set_pad_format(struct v4l2_subdev *sd,
 	*v4l2_subdev_state_get_crop(sd_state, 0) = mode->crop;
 	return 0;
 }
-
-/* --------------------------------------------------------------------------
- * Stream on/off
- * --------------------------------------------------------------------------
- */
 
 static int imx585_enable_streams(struct v4l2_subdev *sd,
 				 struct v4l2_subdev_state *state, u32 pad,
@@ -2207,11 +2172,6 @@ static int imx585_disable_streams(struct v4l2_subdev *sd,
 	return ret;
 }
 
-/* --------------------------------------------------------------------------
- * Power / runtime PM
- * --------------------------------------------------------------------------
- */
-
 static int imx585_power_on(struct device *dev)
 {
 	struct v4l2_subdev *sd = dev_get_drvdata(dev);
@@ -2255,11 +2215,6 @@ static int imx585_power_off(struct device *dev)
 
 	return 0;
 }
-
-/* --------------------------------------------------------------------------
- * Selection / state
- * --------------------------------------------------------------------------
- */
 
 static int imx585_get_selection(struct v4l2_subdev *sd,
 				struct v4l2_subdev_state *sd_state,
@@ -2320,11 +2275,6 @@ static int imx585_init_state(struct v4l2_subdev *sd,
 	return 0;
 }
 
-/* --------------------------------------------------------------------------
- * Subdev ops
- * --------------------------------------------------------------------------
- */
-
 static const struct v4l2_subdev_video_ops imx585_video_ops = {
 	.s_stream = v4l2_subdev_s_stream_helper,
 };
@@ -2347,11 +2297,6 @@ static const struct v4l2_subdev_ops imx585_subdev_ops = {
 	.video = &imx585_video_ops,
 	.pad = &imx585_pad_ops,
 };
-
-/* --------------------------------------------------------------------------
- * Probe / remove
- * --------------------------------------------------------------------------
- */
 
 static int imx585_check_hwcfg(struct device *dev, struct imx585 *imx585)
 {
