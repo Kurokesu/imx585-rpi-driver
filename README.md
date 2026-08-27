@@ -14,7 +14,7 @@ Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illumi
 - 3840×2160 @ 90 fps (10-bit)
 - 3840×2160 @ 70 fps (12-bit)
 - 1920×1080 @ 70 fps (2×2 binning)
-- ClearHDR mode for high-dynamic-range capture, 16-bit or 12-bit compressed
+- Clear HDR mode for high-dynamic-range capture, 16-bit or 12-bit compressed
 - Mono variant support
 - Three sync modes for multi-camera setups
 
@@ -121,7 +121,7 @@ rpicam-still -o test.jpg
 | [`cam0`](#cam0) | Use cam0 port instead of cam1 | cam1 |
 | [`2lane`](#2lane) | Use 2-lane MIPI CSI-2 | 4 lanes |
 | [`mono`](#mono) | Enable monochrome sensor variant | off |
-| [`ccmp`](#ccmp) | Enable 12-bit compressed ClearHDR output | off |
+| [`ccmp`](#ccmp) | Enable 12-bit compressed Clear HDR output | off |
 | [`always-on`](#always-on) | Keep regulator powered (prevents runtime PM power-off) | off |
 | [`link-frequency=<Hz>`](#link-frequency) | Set MIPI CSI-2 link frequency (Hz) | 720000000 |
 | [`sync-mode=<mode>`](#sync-modes) | Multi-camera synchronization mode | internal-leader |
@@ -155,7 +155,7 @@ dtoverlay=imx585,mono
 
 ### ccmp
 
-ClearHDR outputs 16-bit by default. `ccmp` enables sensor gradation compression, adding a 12-bit ClearHDR format with the same HDR range at a quarter less bandwidth:
+Clear HDR outputs 16-bit by default. `ccmp` enables sensor gradation compression, adding a 12-bit Clear HDR format with the same HDR range at a quarter less bandwidth:
 
 ```ini
 dtoverlay=imx585,ccmp
@@ -193,7 +193,7 @@ dtoverlay=imx585,link-frequency=891000000
 > RPi5/RP1 has a 400 Mpix/s processing limit. Without overclocking RP1 (the Camera Frontend), effective framerate is capped at ~43.8 fps @ 4K regardless of the link frequency configured here.
 
 > [!NOTE]
-> ClearHDR halves these rates and caps at 30.0 fps.
+> Clear HDR halves these rates and caps at 30.0 fps.
 
 > [!WARNING]
 > The driver also accepts 1188 MHz (2376 Mbps/lane), but RPi4 does not support this rate and RPi5 exhibits frame drops. Not recommended for production use.
