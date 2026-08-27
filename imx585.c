@@ -1500,10 +1500,11 @@ static const struct v4l2_ctrl_config imx585_cfg_datasel_bk = {
 };
 
 static const u32 grad_thresh_def[2] = { 500, 11500 };
+/* Compression knee points, th[0] writes CCMP1_EXP and th[1] CCMP2_EXP. */
 static const struct v4l2_ctrl_config imx585_cfg_grad_th = {
 	.ops = &imx585_ctrl_ops,
 	.id = V4L2_CID_IMX585_HDR_GRAD_TH,
-	.name = "HDR Gradient Compression Threshold (16-bit)",
+	.name = "HDR Gradation Comp Threshold",
 	.type = V4L2_CTRL_TYPE_U32,
 	.min = 0,
 	.max = 0x1FFFF,
@@ -1527,7 +1528,7 @@ static const struct v4l2_ctrl_config imx585_cfg_grad_th = {
 static const struct v4l2_ctrl_config imx585_cfg_grad_exp_l = {
 	.ops = &imx585_ctrl_ops,
 	.id = V4L2_CID_IMX585_HDR_GRAD_COMP_L,
-	.name = "HDR Gradient Compression Ratio Middle (ACMP1)",
+	.name = "HDR Gradation Comp Ratio Mid",
 	.type = V4L2_CTRL_TYPE_MENU,
 	.min = 6, /* spec lower bound for ACMP1 */
 	.max = ARRAY_SIZE(grad_compression_slope_menu) - 1,
@@ -1538,7 +1539,7 @@ static const struct v4l2_ctrl_config imx585_cfg_grad_exp_l = {
 static const struct v4l2_ctrl_config imx585_cfg_grad_exp_h = {
 	.ops = &imx585_ctrl_ops,
 	.id = V4L2_CID_IMX585_HDR_GRAD_COMP_H,
-	.name = "HDR Gradient Compression Ratio High (ACMP2)",
+	.name = "HDR Gradation Comp Ratio High",
 	.type = V4L2_CTRL_TYPE_MENU,
 	.min = 0,
 	.max = 5, /* spec upper bound for ACMP2 */
