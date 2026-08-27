@@ -112,12 +112,8 @@
 #define IMX585_HMAX_MAX 0xffff
 
 /*
- * SHR0 (3050h), coarse shutter sweep time in lines.
- *
- * AppNote page 5 "List of Setting Register": SHR0 minimum is "More than
- * 8h" in Normal mode and "More than 10h" in Clear HDR mode (= 16
- * decimal). Driver previously used 10 decimal in HDR which is below
- * spec.
+ * SHR0 (3050h), coarse shutter sweep time in lines. AppNote page 5 gives the
+ * minimum as 8h in Normal mode and 10h in Clear HDR, so 8 and 16 decimal.
  */
 #define IMX585_REG_SHR CCI_REG24_LE(0x3050)
 #define IMX585_SHR_MIN 8
@@ -1607,20 +1603,15 @@ static const struct v4l2_ctrl_config imx585_cfg_grad_th = {
 };
 
 /*
- * Per IMX585 AppNote section 4.3 / Rev1.0 page 16:
+ * AppNote section 4.3 page 16 splits the compression slopes by segment:
  *
- *   ACMP1_EXP @ 0x36EE controls the MIDDLE compression segment (between
- *   CCMP1_EXP and CCMP2_EXP). Allowed values: 06h..0Bh (1/64..1/2048).
- *   ACMP2_EXP @ 0x36EC controls the HIGH segment (above CCMP2_EXP).
- *   Allowed values: 00h..05h (1/1..1/32).
+ *   ACMP1_EXP @ 0x36EE, middle segment between CCMP1_EXP and CCMP2_EXP,
+ *   allows 06h..0Bh (1/64..1/2048).
+ *   ACMP2_EXP @ 0x36EC, high segment above CCMP2_EXP, allows 00h..05h
+ *   (1/1..1/32).
  *
- * Writing a value outside the allowed range puts the sensor into a degenerate
- * state and the output ends up clamped at BLC. The original driver defaults
- * had these the wrong way round (idx 2 = "1/4" written to ACMP1, prohibited),
- * which produced all-BLC frames in 12-bit ClearHDR mode.
- *
- * GRAD_COMP_L writes ACMP1_EXP (middle slope, aggressive ratios).
- * GRAD_COMP_H writes ACMP2_EXP (high slope, mild ratios).
+ * Out-of-range values clamp the output at BLC. GRAD_COMP_L writes ACMP1_EXP,
+ * GRAD_COMP_H writes ACMP2_EXP.
  */
 static const struct v4l2_ctrl_config imx585_cfg_grad_exp_l = {
 	.ops = &imx585_ctrl_ops,
