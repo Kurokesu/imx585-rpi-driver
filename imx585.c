@@ -607,8 +607,8 @@ static struct imx585_mode supported_modes[] = {
 		.crop = {
 			.left = IMX585_PIXEL_ARRAY_LEFT,
 			.top = IMX585_PIXEL_ARRAY_TOP,
-			.width = IMX585_PIXEL_ARRAY_WIDTH / 2,
-			.height = IMX585_PIXEL_ARRAY_HEIGHT / 2,
+			.width = IMX585_PIXEL_ARRAY_WIDTH,
+			.height = IMX585_PIXEL_ARRAY_HEIGHT,
 		},
 		.reg_list = {
 			.num_of_regs = ARRAY_SIZE(mode_1080_regs_12bit),
