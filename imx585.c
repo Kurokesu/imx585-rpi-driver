@@ -542,7 +542,7 @@ static const struct cci_reg_sequence mode_1080_regs_12bit[] = {
 };
 
 /*
- * All-pixel 4K, 16-bit ClearHDR. Same as the 12-bit table, but pairs
+ * All-pixel 4K, 16-bit Clear HDR. Same as the 12-bit table, but pairs
  * with win_crop_regs_16bit and MDBIT is overridden to 0x03 (RAW16) at
  * runtime in imx585_enable_streams.
  */
@@ -555,7 +555,7 @@ static const struct cci_reg_sequence mode_4k_regs_16bit[] = {
 
 /*
  * PIX_VST=12 lands the window at the H8 recording top, skipping H6 ignored=4
- * plus H7 margin=8, per AppNote ClearHDR section 3. PIX_HST=8 is the
+ * plus H7 margin=8, per AppNote Clear HDR section 3. PIX_HST=8 is the
  * horizontal equivalent. Buffer ends up exactly the recording area, no OB.
  */
 static const struct cci_reg_sequence win_crop_regs_12bit[] = {
@@ -619,7 +619,7 @@ static struct imx585_mode supported_modes[] = {
 		},
 	},
 	{
-		/* 4K60 all-pixel, 12-bit (SDR + ClearHDR-12 CCMP) */
+		/* 4K60 all-pixel, 12-bit (SDR + Clear HDR CCMP) */
 		.width = IMX585_PIXEL_ARRAY_WIDTH,   /* 3840 */
 		.height = IMX585_PIXEL_ARRAY_HEIGHT, /* 2160 */
 		.hmax_div = 1,
@@ -642,7 +642,7 @@ static struct imx585_mode supported_modes[] = {
 		},
 	},
 	{
-		/* 4K60 all-pixel, 16-bit ClearHDR. See win_crop_regs_16bit. */
+		/* 4K60 all-pixel, 16-bit Clear HDR. See win_crop_regs_16bit. */
 		.width = IMX585_PIXEL_ARRAY_WIDTH,                                  /* 3840 */
 		.height = IMX585_PIXEL_ARRAY_HEIGHT + 2 * IMX585_PIXEL_ARRAY_TOP_4K,/* 2200 */
 		.hmax_div = 1,
@@ -1206,7 +1206,7 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 
 			imx585_activate_hdr_controls(imx585);
 
-			/* Disable HCG in ClearHDR mode */
+			/* Disable HCG in Clear HDR mode */
 			imx585->hcg = imx585->clear_hdr ? 0 : imx585->hcg;
 			__v4l2_ctrl_s_ctrl(imx585->hcg_ctrl, imx585->hcg);
 			imx585_update_gain_limits(imx585);
@@ -1932,7 +1932,7 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 					  NULL);
 		if (ret) {
 			dev_err(imx585->clientdev,
-				"Failed to set ClearHDR regs\n");
+				"Failed to set Clear HDR regs\n");
 			goto err_rpm_put;
 		}
 
@@ -1952,7 +1952,7 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 						IMX585_REG_MDBIT, 0x01, NULL);
 		} else {
 			dev_err(imx585->clientdev,
-				"12-bit ClearHDR CCMP requested without ccmp overlay flag\n");
+				"12-bit Clear HDR CCMP requested without ccmp overlay flag\n");
 			ret = -EINVAL;
 		}
 		if (ret)
@@ -2266,7 +2266,7 @@ static int imx585_probe(struct i2c_client *client)
 		dev_info(dev, "Mono mode selected, check sensor variant\n");
 	imx585->clearhdr_ccmp =
 		of_property_read_bool(dev->of_node, "sony,clearhdr-ccmp");
-	dev_info(dev, "ClearHDR 12-bit CCMP: %s\n",
+	dev_info(dev, "Clear HDR 12-bit CCMP: %s\n",
 		 imx585->clearhdr_ccmp ? "enabled" : "disabled");
 
 	imx585->sync_mode = SYNC_INT_LEADER;
