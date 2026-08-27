@@ -1,6 +1,6 @@
 # IMX585 kernel driver for Raspberry Pi
 
-[![Build](https://github.com/Kurokesu/imx585-rpi-driver/actions/workflows/build-rpi.yml/badge.svg)](https://github.com/Kurokesu/imx585-rpi-driver/actions/workflows/build-rpi.yml)
+[![Build](https://github.com/Kurokesu/imx585-rpi-driver/actions/workflows/build.yml/badge.svg)](https://github.com/Kurokesu/imx585-rpi-driver/actions/workflows/build.yml)
 [![Code style](https://github.com/Kurokesu/imx585-rpi-driver/actions/workflows/code-style.yml/badge.svg)](https://github.com/Kurokesu/imx585-rpi-driver/actions/workflows/code-style.yml)
 [![Release](https://img.shields.io/github/v/release/Kurokesu/imx585-rpi-driver)](https://github.com/Kurokesu/imx585-rpi-driver/releases/latest)
 [![Kurokesu apt archive](https://img.shields.io/badge/apt-Kurokesu_archive-D70A53?logo=debian)](https://apt.kurokesu.com)
