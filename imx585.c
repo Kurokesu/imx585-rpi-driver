@@ -77,7 +77,7 @@
 /*
  * WINMODE [4:0] = 14h enables a readout window set by PIX_HST, PIX_HWIDTH,
  * PIX_VST and PIX_VWIDTH, which drops the OB overhead of the all-pixel
- * readout, see IMX585_PIXEL_ARRAY_TOP_4K. SRM restricts the window registers:
+ * readout, see IMX585_PIXEL_ARRAY_TOP. SRM restricts the window registers:
  *   PIX_HST      multiple of 2  (>0)
  *   PIX_HWIDTH   multiple of 16 (>=64)
  *   PIX_VST      multiple of 4  (>0)
@@ -199,13 +199,12 @@ static const int imx585_tpg_val[] = {
 #define IMX585_PIXEL_ARRAY_WIDTH 3840U
 #define IMX585_PIXEL_ARRAY_HEIGHT 2160U
 /*
- * OB rows sit at the top of the visible buffer, 20 for all-pixel (H4=10 plus
- * H5=10) and 10 for binning (H4=H5=5), per AppNote section 3.1 page 8. Crop
- * top skips them. In Clear HDR they latch at the HG saturation value and show
- * as a speckle band if left in.
+ * 20 OB rows (H4=10 plus H5=10) precede the active area, per AppNote section
+ * 3.1 page 8, so they also give its offset in the native array. Crop top skips
+ * them. In Clear HDR they latch at the HG saturation value and show as a
+ * speckle band if left in.
  */
-#define IMX585_PIXEL_ARRAY_TOP_4K 20U
-#define IMX585_PIXEL_ARRAY_TOP_BIN 10U
+#define IMX585_PIXEL_ARRAY_TOP 20U
 
 /* Link frequency setup */
 enum {
@@ -606,8 +605,8 @@ static struct imx585_mode supported_modes[] = {
 		.min_hmax = 366,            /* overwritten at runtime */
 		.min_vmax = IMX585_VMAX_DEFAULT,
 		.crop = {
-			.left = 0,
-			.top = 0,
+			.left = IMX585_PIXEL_ARRAY_LEFT,
+			.top = IMX585_PIXEL_ARRAY_TOP,
 			.width = IMX585_PIXEL_ARRAY_WIDTH / 2,
 			.height = IMX585_PIXEL_ARRAY_HEIGHT / 2,
 		},
@@ -629,8 +628,8 @@ static struct imx585_mode supported_modes[] = {
 		.min_hmax = 550,            /* overwritten at runtime */
 		.min_vmax = IMX585_VMAX_DEFAULT,
 		.crop = {
-			.left = 0,
-			.top = 0,
+			.left = IMX585_PIXEL_ARRAY_LEFT,
+			.top = IMX585_PIXEL_ARRAY_TOP,
 			.width = IMX585_PIXEL_ARRAY_WIDTH,
 			.height = IMX585_PIXEL_ARRAY_HEIGHT,
 		},
@@ -646,14 +645,14 @@ static struct imx585_mode supported_modes[] = {
 	{
 		/* 4K60 all-pixel, 16-bit Clear HDR. See win_crop_regs_16bit. */
 		.width = IMX585_PIXEL_ARRAY_WIDTH,                                  /* 3840 */
-		.height = IMX585_PIXEL_ARRAY_HEIGHT + 2 * IMX585_PIXEL_ARRAY_TOP_4K,/* 2200 */
+		.height = IMX585_PIXEL_ARRAY_HEIGHT + 2 * IMX585_PIXEL_ARRAY_TOP, /* 2200 */
 		.hmax_div = 1,
 		.hmax_table = HMAX_table_4lane_4K_12bit,
 		.min_hmax = 550,
 		.min_vmax = IMX585_VMAX_DEFAULT,
 		.crop = {
-			.left = 0,
-			.top = 0,
+			.left = IMX585_PIXEL_ARRAY_LEFT,
+			.top = IMX585_PIXEL_ARRAY_TOP,
 			.width = IMX585_PIXEL_ARRAY_WIDTH,
 			.height = IMX585_PIXEL_ARRAY_HEIGHT,
 		},
@@ -678,8 +677,8 @@ static struct imx585_mode supported_10bit_modes[] = {
 		.min_hmax = 366,            /* overwritten at runtime */
 		.min_vmax = IMX585_VMAX_DEFAULT,
 		.crop = {
-			.left = 0,
-			.top = 0,
+			.left = IMX585_PIXEL_ARRAY_LEFT,
+			.top = IMX585_PIXEL_ARRAY_TOP,
 			.width = IMX585_PIXEL_ARRAY_WIDTH,
 			.height = IMX585_PIXEL_ARRAY_HEIGHT,
 		},
@@ -2103,12 +2102,9 @@ static int imx585_get_selection(struct v4l2_subdev *sd,
 		return 0;
 	case V4L2_SEL_TGT_CROP_BOUNDS:
 	case V4L2_SEL_TGT_CROP_DEFAULT:
-		/*
-		 * Buffer holds active pixels only, the WINMODE crop drops OB
-		 * rows and cols at readout, see win_crop_regs_12bit.
-		 */
-		sel->r.left = 0;
-		sel->r.top = 0;
+		/* Active area, placed where it sits in the native array. */
+		sel->r.left = IMX585_PIXEL_ARRAY_LEFT;
+		sel->r.top = IMX585_PIXEL_ARRAY_TOP;
 		sel->r.width = IMX585_PIXEL_ARRAY_WIDTH;
 		sel->r.height = IMX585_PIXEL_ARRAY_HEIGHT;
 		return 0;
