@@ -3,6 +3,8 @@
  * A V4L2 driver for Sony IMX585 camera.
  *
  * Copyright (C) 2024-2026 Will Whang
+ * Copyright (C) Tetsuya Nomura
+ * Copyright (C) 2026 UAB Kurokesu
  *
  * Based on the Sony IMX477 driver
  * Copyright (C) 2019-2020 Raspberry Pi (Trading) Ltd
@@ -2410,5 +2412,6 @@ module_i2c_driver(imx585_i2c_driver);
 
 MODULE_AUTHOR("Will Whang <will@willwhang.com>");
 MODULE_AUTHOR("Tetsuya Nomura <tetsuya.nomura@soho-enterprise.com>");
+MODULE_AUTHOR("Danius Kalvaitis <danius@kurokesu.com>");
 MODULE_DESCRIPTION("Sony IMX585 sensor driver");
 MODULE_LICENSE("GPL");
