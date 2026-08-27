@@ -14,7 +14,7 @@ Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illumi
 - 3840×2160 @ 90 fps (10-bit)
 - 3840×2160 @ 70 fps (12-bit)
 - 1920×1080 @ 70 fps (2×2 binning)
-- Clear HDR mode for high-dynamic-range capture, 16-bit or 12-bit compressed
+- Clear HDR mode for high-dynamic-range capture (experimental)
 - Mono variant support
 - Three sync modes for multi-camera setups
 
@@ -160,6 +160,9 @@ Clear HDR outputs 16-bit by default. `ccmp` enables sensor gradation compression
 ```ini
 dtoverlay=imx585,ccmp
 ```
+
+> [!WARNING]
+> Clear HDR is experimental and not yet tuned. Bright parts of a scene can render black in both 16-bit and 12-bit output.
 
 ### always-on
 
