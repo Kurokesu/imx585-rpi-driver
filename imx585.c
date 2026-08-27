@@ -73,16 +73,9 @@
 /* BIN mode: 0x01 mono bin, 0x00 color */
 #define IMX585_BIN_MODE CCI_REG8(0x3019)
 /*
- * Window cropping (SRM page table, "WINMODE" register & "Restrictions on
- * Window cropping mode"). Setting WINMODE [4:0] = 14h enables a
- * pixel-array readout window defined by PIX_HST/PIX_HWIDTH/PIX_VST/
- * PIX_VWIDTH. Sensor then outputs only those rows and cols, skipping the
- * 8-col + 20-row optical-black overhead the all-pixel readout includes.
- * Without this, the OB rows land at the top of the CFE buffer and the
- * downstream BE crop (which is geometric / aspect-ratio centred) leaks
- * the OB into the JPEG output as a black bar at the top of the frame.
- *
- * Register-set restrictions per SRM:
+ * WINMODE [4:0] = 14h enables a readout window set by PIX_HST, PIX_HWIDTH,
+ * PIX_VST and PIX_VWIDTH, which drops the OB overhead of the all-pixel
+ * readout, see IMX585_PIXEL_ARRAY_TOP_4K. SRM restricts the window registers:
  *   PIX_HST      multiple of 2  (>0)
  *   PIX_HWIDTH   multiple of 16 (>=64)
  *   PIX_VST      multiple of 4  (>0)
@@ -151,12 +144,10 @@
 #define IMX585_GAIN_MIN_HCG 34
 #define IMX585_GAIN_MAX_SDR 240
 /*
- * AppNote page 5 "List of Setting Register": GAIN range is 00h..50h
- * (0..80 decimal). Covers all modes including Clear HDR. The section 5 page
- * 18 sum constraint `9.6dB <= GAIN + EXP_GAIN <= 29.1dB` for built-in
- * combination, with EXP_GAIN=12dB default, gives GAIN <= 17.1dB =
- * register 57. Use 80 here as the absolute register cap (the IPA owns
- * the per-mode tuning of the actual usable range above 57 if it cares).
+ * GAIN range is 00h..50h in every mode including Clear HDR, AppNote page 5.
+ * Section 5 page 18 caps GAIN + EXP_GAIN at 29.1dB for built-in combination,
+ * so the 12dB EXP_GAIN default leaves 17.1dB, register 57. Keep 80 as the
+ * register cap and leave the usable range to the IPA.
  */
 #define IMX585_GAIN_MAX_HDR 80
 #define IMX585_GAIN_STEP 1
@@ -787,16 +778,11 @@ struct imx585 {
 	bool clear_hdr;
 
 	/*
-	 * Sync Mode
-	 * 0 = Internal Sync Leader Mode
-	 * 1 = External Sync Leader Mode
-	 * 2 = Follower Mode
-	 * The datasheet wording is very confusing but basically:
-	 * Leader Mode = Sensor using internal clock to drive the sensor
-	 * But with external sync mode you can send a XVS input so the sensor
-	 * will try to align with it.
-	 * For Follower mode it is purely driven by external clock.
-	 * In this case you need to drive both XVS and XHS.
+	 * Indices into sync_mode_menu:
+	 *   0 leader, own clock, XVS and XHS out.
+	 *   1 leader on own clock but aligned to an incoming XVS, XHS out.
+	 *   2 follower, externally clocked, XVS and XHS in.
+	 * Index 1 is SYNC_INT_FOLLOWER even though the menu calls it a leader.
 	 */
 	u8 sync_mode;
 
@@ -931,11 +917,9 @@ static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 			break;
 
 		/*
-		 * 12-bit. Per AppNote section 2 page 6, the 1920x1080 binning
-		 * mode in Clear HDR only supports 16-bit output, 12-bit HDR is
-		 * not a valid sensor configuration and the part returns BLC if
-		 * asked. Skip the binning entry (index 0) when WDR=1, leaving
-		 * only the 4K all-pixel mode at index 1.
+		 * 12-bit. AppNote section 2 page 6: binned Clear HDR is 16-bit
+		 * only and the part returns BLC if asked for 12-bit, so
+		 * imx585_select_12bit_modes drops the binned entry under WDR.
 		 */
 		case MEDIA_BUS_FMT_SRGGB12_1X12:
 		case MEDIA_BUS_FMT_SGRBG12_1X12:
@@ -2118,10 +2102,8 @@ static int imx585_get_selection(struct v4l2_subdev *sd,
 	case V4L2_SEL_TGT_CROP_BOUNDS:
 	case V4L2_SEL_TGT_CROP_DEFAULT:
 		/*
-		 * Active recording area = buffer dimensions, since the sensor
-		 * is configured (via WINMODE crop, see win_crop_regs_*)
-		 * to skip OB rows/cols at readout. Buffer holds active pixels
-		 * only.
+		 * Buffer holds active pixels only, the WINMODE crop drops OB
+		 * rows and cols at readout, see win_crop_regs_12bit.
 		 */
 		sel->r.left = 0;
 		sel->r.top = 0;
