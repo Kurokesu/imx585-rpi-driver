@@ -272,10 +272,8 @@ static const u16 HMAX_table_4lane_4K_12bit[] = {
 	[IMX585_LINK_FREQ_720MHZ] = 660,
 	[IMX585_LINK_FREQ_891MHZ] = 550,
 	/*
-	 * 2079 Mbps/lane RAW12 is not listed in the standard all-pixel table.
-	 * HMAX=440 advertises roughly 75 fps but produced broken low-signal
-	 * frames on Pi 5/RP1. HMAX=472 is the verified-clean timing used for
-	 * RAW12 reference captures.
+	 * Sony lists no RAW12 timing here. 440 reaches ~75 fps but breaks
+	 * low-signal frames, 472 is clean.
 	 */
 	[IMX585_LINK_FREQ_1039MHZ] = 472,
 	[IMX585_LINK_FREQ_1188MHZ] = 472,
@@ -289,10 +287,8 @@ static const u16 HMAX_table_4lane_4K_10bit[] = {
 	[IMX585_LINK_FREQ_720MHZ] = 550,
 	[IMX585_LINK_FREQ_891MHZ] = 550,
 	/*
-	 * Sony's 2079 Mbps/lane RAW10 row lists HMAX=366, VMAX=2250 for the
-	 * 90.1 fps all-pixel mode. On the Pi 5/RP1 path, same-scene RAW10 vs
-	 * RAW12 QA showed deterministic artifacts at HMAX=366. HMAX=375 with
-	 * VMAX=2200 is the validated 90 fps clean timing on this DUT.
+	 * Sony pairs 366 with VMAX 2250 for 90.1 fps, which shows artifacts on
+	 * the RP1 path. 375 with VMAX 2200 is clean at 90 fps.
 	 */
 	[IMX585_LINK_FREQ_1039MHZ] = 375,
 	[IMX585_LINK_FREQ_1188MHZ] = 376,
@@ -507,15 +503,8 @@ static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	{ CCI_REG8(0x4940), 0x41 }, /* 12-bit HDR */
 	{ CCI_REG8(0x3081), 0x02 }, /* EXP_GAIN: +12 dB default */
 	/*
-	 * HG/LG selection thresholds (§4.2, page 15).
-	 *
-	 * The AppNote's "initial value" of EXP_TH_H = EXP_TH_L = 0x1000
-	 * documents a fallback to the EXP_BK weighted blend, but empirically
-	 * that path leaves the combiner output clamped near BLC for typical
-	 * scenes (verified at LED 5500K @ 80% on this rig: HDR-16 DNG max
-	 * stays at ~4200 with TH_H=TH_L=0x1000, vs ~36000 with TH_H=0xFFF /
-	 * TH_L=0). Use the rule-based selection range instead so HG drives
-	 * the bulk of the output and LG only takes over once HG saturates.
+	 * Equal thresholds pick the EXP_BK blend, which clamps HDR-16 output
+	 * near BLC, peaking around 4200 against 36000 for the range below.
 	 */
 	/* EXP_TH_H = 0x0FFF, HG saturation cutoff */
 	{ CCI_REG8(0x36d0), 0xFF },
@@ -1575,18 +1564,8 @@ static const struct v4l2_ctrl_ops imx585_ctrl_ops = {
 };
 
 /*
- * ClearHDR threshold register order (per IMX585 AppNote, §4.2):
- *   th[0] -> EXP_TH_H (0x36D0): high-gain saturation cutoff
- *   th[1] -> EXP_TH_L (0x36D4): high-gain "low" cutoff
- * Constraint: EXP_TH_H >= EXP_TH_L (the spec marks EXP_TH_H < EXP_TH_L
- * as "Prohibited" — the sensor enters an invalid state and only outputs
- * the BLC pedestal).
- *
- * The AppNote's "initial value" of 0x1000 each (= thresholds equal,
- * EXP_BK weighted blend) clamps the combiner output near BLC on
- * typical scenes — empirically verified on this rig. Default to a wide
- * rule-based selection range so HG drives normal exposure values and
- * LG only kicks in once HG saturates near 0x0FFF.
+ * th[0] is EXP_TH_H (0x36D0), th[1] is EXP_TH_L (0x36D4). AppNote section
+ * 4.2 prohibits EXP_TH_H < EXP_TH_L, which leaves the sensor emitting BLC.
  */
 static const u16 hdr_thresh_def[2] = { 0x0FFF, 0x0000 };
 static const struct v4l2_ctrl_config imx585_cfg_datasel_th = {
