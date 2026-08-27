@@ -307,10 +307,10 @@ enum {
 	SYNC_EXTERNAL,
 };
 
-static const char *const sync_mode_menu[] = {
-	"Internal Sync Leader Mode",
-	"External Sync Leader Mode",
-	"Follower Mode",
+static const char *const sync_mode_names[] = {
+	"internal-leader",
+	"internal-follower",
+	"external",
 };
 
 struct imx585_reg_list {
@@ -778,11 +778,10 @@ struct imx585 {
 	bool clear_hdr;
 
 	/*
-	 * Indices into sync_mode_menu:
-	 *   0 leader, own clock, XVS and XHS out.
-	 *   1 leader on own clock but aligned to an incoming XVS, XHS out.
-	 *   2 follower, externally clocked, XVS and XHS in.
-	 * Index 1 is SYNC_INT_FOLLOWER even though the menu calls it a leader.
+	 * Indices into sync_mode_names:
+	 *   0 own clock, XVS and XHS out.
+	 *   1 own clock aligned to an incoming XVS, XHS out.
+	 *   2 externally clocked, XVS and XHS in.
 	 */
 	u8 sync_mode;
 
@@ -1898,7 +1897,7 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 			ret = cci_write(imx585->regmap, IMX585_REG_XXS_OUTSEL,
 					0x0A, NULL);
 	} else {
-		dev_info(imx585->clientdev, "Follower: XVS/XHS input\n");
+		dev_info(imx585->clientdev, "External sync: XVS/XHS input\n");
 		ret = cci_write(imx585->regmap, IMX585_REG_XXS_DRV, 0x0F,
 				NULL); /* inputs */
 		if (!ret)
@@ -2277,7 +2276,7 @@ static int imx585_probe(struct i2c_client *client)
 		else if (!strcmp(sync_mode, "external"))
 			imx585->sync_mode = SYNC_EXTERNAL;
 	}
-	dev_info(dev, "sync-mode: %s\n", sync_mode_menu[imx585->sync_mode]);
+	dev_info(dev, "sync-mode: %s\n", sync_mode_names[imx585->sync_mode]);
 
 	ret = imx585_check_hwcfg(dev, imx585);
 	if (ret)
