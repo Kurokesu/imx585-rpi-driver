@@ -73,10 +73,10 @@
 /* BIN mode: 0x01 mono bin, 0x00 color */
 #define IMX585_BIN_MODE CCI_REG8(0x3019)
 /*
- * Window cropping (SRM page table — "WINMODE" register & "Restrictions on
+ * Window cropping (SRM page table, "WINMODE" register & "Restrictions on
  * Window cropping mode"). Setting WINMODE [4:0] = 14h enables a
  * pixel-array readout window defined by PIX_HST/PIX_HWIDTH/PIX_VST/
- * PIX_VWIDTH; the sensor then outputs ONLY those rows/cols, skipping the
+ * PIX_VWIDTH. Sensor then outputs only those rows and cols, skipping the
  * 8-col + 20-row optical-black overhead the all-pixel readout includes.
  * Without this, the OB rows land at the top of the CFE buffer and the
  * downstream BE crop (which is geometric / aspect-ratio centred) leaks
@@ -84,10 +84,10 @@
  *
  * Register-set restrictions per SRM:
  *   PIX_HST      multiple of 2  (>0)
- *   PIX_HWIDTH   multiple of 16 (≥64)
+ *   PIX_HWIDTH   multiple of 16 (>=64)
  *   PIX_VST      multiple of 4  (>0)
- *   PIX_VWIDTH   multiple of 4  (≥239)
- *   VMAX         ≥ PIX_VWIDTH + 70
+ *   PIX_VWIDTH   multiple of 4  (>=239)
+ *   VMAX         >= PIX_VWIDTH + 70
  */
 #define IMX585_REG_WINMODE CCI_REG8(0x3018)
 #define IMX585_WINMODE_ALLPIXEL 0x10 /* initial value */
@@ -104,7 +104,7 @@
 #define IMX585_REG_VMAX CCI_REG24_LE(0x3028)
 #define IMX585_VMAX_MAX 0xfffff
 #define IMX585_VMAX_DEFAULT 2250
-/* Min HMAX (4-lane) for the Clear HDR dual HG+LG read; see imx585_update_hmax */
+/* Min HMAX (4-lane) for the Clear HDR dual HG+LG read, see imx585_update_hmax */
 #define IMX585_HMAX_MIN_CLEARHDR 550
 
 /* HMAX internal HBLANK */
@@ -112,7 +112,7 @@
 #define IMX585_HMAX_MAX 0xffff
 
 /*
- * SHR0 (3050h) — coarse shutter sweep time (lines).
+ * SHR0 (3050h), coarse shutter sweep time in lines.
  *
  * AppNote page 5 "List of Setting Register": SHR0 minimum is "More than
  * 8h" in Normal mode and "More than 10h" in Clear HDR mode (= 16
@@ -121,7 +121,7 @@
  */
 #define IMX585_REG_SHR CCI_REG24_LE(0x3050)
 #define IMX585_SHR_MIN 8
-#define IMX585_SHR_MIN_HDR 16 /* AppNote §5 page 5 */
+#define IMX585_SHR_MIN_HDR 16 /* AppNote section 5 page 5 */
 #define IMX585_SHR_MAX 0xfffff
 
 /* Exposure control (lines) */
@@ -156,9 +156,9 @@
 #define IMX585_GAIN_MAX_SDR 240
 /*
  * AppNote page 5 "List of Setting Register": GAIN range is 00h..50h
- * (0..80 decimal) — covers all modes including Clear HDR. The §5 page
- * 18 sum constraint `9.6dB ≤ GAIN + EXP_GAIN ≤ 29.1dB` for built-in
- * combination, with EXP_GAIN=12dB default, gives GAIN ≤ 17.1dB =
+ * (0..80 decimal). Covers all modes including Clear HDR. The section 5 page
+ * 18 sum constraint `9.6dB <= GAIN + EXP_GAIN <= 29.1dB` for built-in
+ * combination, with EXP_GAIN=12dB default, gives GAIN <= 17.1dB =
  * register 57. Use 80 here as the absolute register cap (the IPA owns
  * the per-mode tuning of the actual usable range above 57 if it cares).
  */
@@ -210,11 +210,11 @@ static const int imx585_tpg_val[] = {
 #define IMX585_PIXEL_ARRAY_WIDTH 3840U
 #define IMX585_PIXEL_ARRAY_HEIGHT 2160U
 /*
- * AppNote §3.1 page 8 ("Image Data output format") puts the OB region
+ * AppNote section 3.1 page 8 ("Image Data output format") puts the OB region
  * at the top of the visible buffer:
  *   All-pixel:   H4 (Ignored OB) = 10 + H5 (Vertical effective OB) = 10
- *                → 20 rows of OB before the recording area.
- *   Binning:     H4 = 5 + H5 = 5 → 10 rows of OB.
+ *                -> 20 rows of OB before the recording area.
+ *   Binning:     H4 = 5 + H5 = 5 -> 10 rows of OB.
  *
  * In Clear HDR, the OB rows contain stuck pixels that latch at the
  * HG saturation value (~35968) and would render as a speckle band /
@@ -223,9 +223,9 @@ static const int imx585_tpg_val[] = {
  * crop offsets below skip both kinds of OB out of the active area.
  */
 /*
- * Per-mode crop top: skip the OB rows. AppNote §3.1 page 8 lists 20
+ * Per-mode crop top: skip the OB rows. AppNote section 3.1 page 8 lists 20
  * OB rows for All-pixel (H4=10 + H5=10) and 10 for binning (H4=H5=5)
- * at the top of the visible buffer. Use the OB count directly — the
+ * at the top of the visible buffer. Use the OB count directly, since the
  * buffer height equals per-mode top + recording area exactly (4K:
  * 20 + 2160 = 2180, binned: 10 + 1080 = 1090), so the BE's ScalerCrop
  * fits with no extra padding above or below.
@@ -309,9 +309,9 @@ static const char *const hdr_gain_adder_menu[] = {
 };
 
 /*
- * EXP_BK register values per AppNote §4.2 page 15. Indices 0-7 are valid;
- * higher values are "Setting Prohibited". Spec lists two 50/50 entries
- * (indices 0 and 4) — keep both, label them clearly.
+ * EXP_BK register values per AppNote section 4.2 page 15. Indices 0-7 are
+ * valid, higher values are "Setting Prohibited". Spec lists two 50/50
+ * entries (indices 0 and 4). Keep both, label them clearly.
  */
 static const char *const hdr_data_blender_menu[] = {
 	"HG 1/2, LG 1/2", /* 0h */
@@ -515,10 +515,10 @@ static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	/* EXP_BK = HG 1/2, LG 1/2, only used in overlap */
 	{ CCI_REG8(0x36e2), 0x00 },
 	/*
-	 * Spec-valid CCMP gradation-compression slopes (§4.3, page 16). These
-	 * must land in their register's allowed range or the sensor output
-	 * clamps at BLC. ACMP1 (middle segment) must be 06h..0Bh; ACMP2 (high
-	 * segment) must be 00h..05h.
+	 * Spec-valid CCMP gradation-compression slopes (section 4.3, page 16).
+	 * These must land in their register's allowed range or the sensor
+	 * output clamps at BLC. ACMP1 (middle segment) must be 06h..0Bh,
+	 * ACMP2 (high segment) must be 00h..05h.
 	 */
 	/* ACMP2_EXP = 1/16 high slope, natural inverse spans 16-bit */
 	{ CCI_REG8(0x36ec), 0x04 },
@@ -584,7 +584,7 @@ static const struct cci_reg_sequence mode_4k_regs_16bit[] = {
 /*
  * Window-crop registers, written straight after the mode table above.
  * PIX_VST=12 lands the cropping window at the H8 recording top (skipping
- * H6 ignored=4 + H7 margin=8 = 12 lines per AppNote ClearHDR §3).
+ * H6 ignored=4 + H7 margin=8 = 12 lines per AppNote ClearHDR section 3).
  * PIX_HST=8 is the equivalent horizontal margin.
  *
  * PIX_VWIDTH = 2160 = active recording height. Sensor outputs PIX_VWIDTH
@@ -644,16 +644,16 @@ static const struct cci_reg_sequence win_crop_regs_16bit[] = {
 
 /*
  * Mode array layout:
- *   [0] 1080p binned (12-bit; ClearHDR FHD binning is unusable)
+ *   [0] 1080p binned (12-bit, ClearHDR FHD binning is unusable)
  *   [1] 4K all-pixel for 12-bit formats (SDR + ClearHDR-12 CCMP).
- *       Sensor-side WINMODE crop strips the OB region — buffer = active.
+ *       Sensor-side WINMODE crop strips the OB region, buffer = active.
  *   [2] 4K all-pixel for 16-bit ClearHDR. The sensor still emits 20 OB
  *       rows at the top of the buffer in this format (CFE accepts every
  *       CSI2 packet type because csi_dt=0 for RAW16, and no IMX585
  *       register suppresses the H4+H5 OB-row output). Advertise height
  *       = active + 20, set crop.top = 20 so libcamera/BE skip the OB.
  *
- * get_mode_table() routes 12-bit → modes [0..1], 16-bit → mode [2].
+ * get_mode_table() routes 12-bit -> modes [0..1], 16-bit -> mode [2].
  */
 enum imx585_mode_id {
 	IMX585_MODE_1080P_12BIT,
@@ -995,7 +995,7 @@ static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 		switch (code) {
 		/* 16-bit (Clear HDR linear, only valid when WDR=1).
 		 *
-		 * 4K-only — binned Clear HDR is unusable. Routes to mode [2]
+		 * 4K-only, binned Clear HDR is unusable. Routes to mode [2]
 		 * which advertises height = active + 20 OB rows so the buffer
 		 * covers the OB region the sensor still emits in this format.
 		 */
@@ -1008,8 +1008,8 @@ static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 			break;
 
 		/*
-		 * 12-bit. Per AppNote §2 page 6, the 1920×1080 binning mode in
-		 * Clear HDR only supports 16-bit output — 12-bit binned HDR is
+		 * 12-bit. Per AppNote section 2 page 6, the 1920x1080 binning
+		 * mode in Clear HDR only supports 16-bit output, 12-bit HDR is
 		 * not a valid sensor configuration and the part returns BLC if
 		 * asked. Skip the binning entry (index 0) when WDR=1, leaving
 		 * only the 4K all-pixel mode at index 1.
@@ -1203,13 +1203,14 @@ static void imx585_update_hmax(struct imx585 *imx585)
 		u32 v = IMX585_VMAX_DEFAULT * hdr_scale;
 
 		/*
-		 * Clear HDR always does the dual HG+LG read, so the line readout
-		 * has a higher minimum (~HMAX 550 at 4-lane) than single-read
-		 * SDR — independent of output depth (12-bit CCMP or 16-bit). The
-		 * 12-bit/link-bandwidth tables drop below that at >=2079 Mbps/lane
-		 * (HMAX 472), where the HDR frame loses ~94% of its rows. Floor it
-		 * so Clear HDR runs on the high-speed link without a slower
-		 * dedicated hdr-link-frequency.
+		 * Clear HDR always does the dual HG+LG read, so the line
+		 * readout has a higher minimum (~HMAX 550 at 4-lane) than
+		 * single-read SDR, independent of output depth (12-bit CCMP
+		 * or 16-bit). The 12-bit/link-bandwidth tables drop below
+		 * that at >=2079 Mbps/lane (HMAX 472), where the HDR frame
+		 * loses ~94% of its rows. Floor it so Clear HDR runs on the
+		 * high-speed link without a slower dedicated
+		 * hdr-link-frequency.
 		 */
 		if (imx585->clear_hdr)
 			h = max_t(u32, h,
@@ -1606,7 +1607,7 @@ static const struct v4l2_ctrl_config imx585_cfg_grad_th = {
 };
 
 /*
- * Per IMX585 AppNote §4.3 / Rev1.0 page 16:
+ * Per IMX585 AppNote section 4.3 / Rev1.0 page 16:
  *
  *   ACMP1_EXP @ 0x36EE controls the MIDDLE compression segment (between
  *   CCMP1_EXP and CCMP2_EXP). Allowed values: 06h..0Bh (1/64..1/2048).
@@ -1615,7 +1616,7 @@ static const struct v4l2_ctrl_config imx585_cfg_grad_th = {
  *
  * Writing a value outside the allowed range puts the sensor into a degenerate
  * state and the output ends up clamped at BLC. The original driver defaults
- * had these the wrong way round (idx 2 = "1/4" written to ACMP1 — prohibited),
+ * had these the wrong way round (idx 2 = "1/4" written to ACMP1, prohibited),
  * which produced all-BLC frames in 12-bit ClearHDR mode.
  *
  * GRAD_COMP_L writes ACMP1_EXP (middle slope, aggressive ratios).
@@ -1639,7 +1640,7 @@ static const struct v4l2_ctrl_config imx585_cfg_grad_exp_h = {
 	.type = V4L2_CTRL_TYPE_MENU,
 	.min = 0,
 	.max = 5, /* spec upper bound for ACMP2 */
-	.def = 4, /* 1/16 — natural inverse spans 16-bit cleanly */
+	.def = 4, /* 1/16, natural inverse spans 16-bit cleanly */
 	.qmenu = grad_compression_slope_menu,
 };
 
@@ -1912,7 +1913,7 @@ static int imx585_set_pad_format(struct v4l2_subdev *sd,
 	 * (otherwise the crop stays at whatever init_state set, which is
 	 * mode 0). Per-mode crop matters because the OB offsets at the top
 	 * of the visible buffer differ between binning (10 rows) and 4K
-	 * all-pixel (20 rows) — see IMX585_PIXEL_ARRAY_TOP_BIN/4K.
+	 * all-pixel (20 rows), see IMX585_PIXEL_ARRAY_TOP_BIN/4K.
 	 */
 	*v4l2_subdev_state_get_crop(sd_state, 0) = mode->crop;
 	return 0;
@@ -2046,10 +2047,10 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 		 * isn't bypassed by the cropping window. Increasing PIX_VST
 		 * shifts the BOTTOM of the buffer (recording window slides
 		 * down) but not the top OB count. Needs further datasheet
-		 * investigation or empirical pattern testing — for now the
+		 * investigation or empirical pattern testing. For now the
 		 * SDR fix is in place and HDR keeps the residual top-bar.
 		 */
-		/* 16-bit: linear; 12-bit: opt-in gradation compression. */
+		/* 16-bit is linear, 12-bit takes opt-in gradation compression. */
 		if (imx585_is_clearhdr_16bit_code(fmt_code)) {
 			ret = cci_write(imx585->regmap, IMX585_REG_CCMP_EN,
 					0x00, NULL);
@@ -2350,7 +2351,7 @@ static int imx585_check_module_exists(struct imx585 *imx585)
 	int ret;
 	u64 val;
 
-	/* No chip-id register; read a known register as a presence test */
+	/* No chip-id register, read a known register as a presence test */
 	ret = cci_read(imx585->regmap, IMX585_REG_BLKLEVEL, &val, NULL);
 	if (ret) {
 		dev_err(imx585->clientdev, "register read failed (%d)\n", ret);
