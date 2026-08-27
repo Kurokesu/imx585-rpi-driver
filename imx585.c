@@ -807,8 +807,6 @@ struct imx585 {
 	bool common_regs_written;
 };
 
-/* Helpers */
-
 static inline struct imx585 *to_imx585(struct v4l2_subdev *sd)
 {
 	return container_of(sd, struct imx585, sd);
@@ -1707,7 +1705,6 @@ static int imx585_init_controls(struct imx585 *imx585)
 	if (ret)
 		goto err_free;
 
-	/* Set the default value for ClearHDR thresholds */
 	memcpy(imx585->datasel_th_ctrl->p_cur.p, hdr_thresh_def,
 	       sizeof(hdr_thresh_def));
 	memcpy(imx585->datasel_th_ctrl->p_new.p, hdr_thresh_def,
@@ -1928,7 +1925,6 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 
 	imx585->common_regs_written = true;
 
-	/* Select mode */
 	mode = imx585_state_get_mode(imx585, state, &fmt_code);
 
 	ret = cci_multi_reg_write(imx585->regmap, mode->reg_list.regs,
@@ -1956,17 +1952,6 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 			goto err_rpm_put;
 		}
 
-		/*
-		 * Known issue: ClearHDR mode leaves ~19 OB rows at the top of
-		 * the cropped buffer, regardless of PIX_VST value. WINMODE
-		 * crop works cleanly for SDR (row 0 = scene) but in HDR the
-		 * sensor appears to prepend an HDR-specific OB region that
-		 * isn't bypassed by the cropping window. Increasing PIX_VST
-		 * shifts the BOTTOM of the buffer (recording window slides
-		 * down) but not the top OB count. Needs further datasheet
-		 * investigation or empirical pattern testing. For now the
-		 * SDR fix is in place and HDR keeps the residual top-bar.
-		 */
 		/* 16-bit is linear, 12-bit takes opt-in gradation compression. */
 		if (imx585_is_clearhdr_16bit_code(fmt_code)) {
 			ret = cci_write(imx585->regmap, IMX585_REG_CCMP_EN,
@@ -2346,7 +2331,6 @@ static int imx585_probe(struct i2c_client *client)
 	imx585->reset_gpio =
 		devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
 
-	/* Power on to probe the device */
 	ret = imx585_power_on(dev);
 	if (ret)
 		return ret;
