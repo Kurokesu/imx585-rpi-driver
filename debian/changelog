@@ -1,3 +1,18 @@
+imx585-rpi-dkms (0.2.0-1) unstable; urgency=medium
+
+  * Report crop rectangles in native pixel array coordinates.
+  * Report full pixel array crop for binned mode.
+  * Strip optical black rows from output with WINMODE crop.
+  * Add 10-bit 4K all-pixel mode.
+  * Rename HDR gradation controls, old names collided at 31 characters.
+  * Clear HDR, now marked experimental and not yet tuned:
+    - Add ccmp overlay param for 12-bit compressed output.
+    - Offer 12-bit at 4K only, sensor lacks binned 12-bit HDR.
+    - Fix register defaults against Sony application note.
+    - Fix frame rate limits with a per-mode minimum line period.
+
+ -- Danius Kalvaitis <danius@kurokesu.com>  Fri, 28 Aug 2026 15:26:51 +0300
+
 imx585-rpi-dkms (0.1.0-1) unstable; urgency=medium
 
   * Initial release as a DKMS source package.
