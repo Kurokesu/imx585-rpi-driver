@@ -1,3 +1,11 @@
+imx585-rpi-dkms (0.2.1-1) unstable; urgency=medium
+
+  * Quiet routine register writes and timing updates to debug level.
+  * Report driver version in modinfo.
+  * Stop leaving a build directory in the installed source tree.
+
+ -- Danius Kalvaitis <danius@kurokesu.com>  Mon, 31 Aug 2026 16:38:27 +0300
+
 imx585-rpi-dkms (0.2.0-1) unstable; urgency=medium
 
   * Report crop rectangles in native pixel array coordinates.
