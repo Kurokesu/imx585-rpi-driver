@@ -9,7 +9,7 @@ Rules-Requires-Root: no
 
 Package: imx585-rpi-dkms
 Architecture: all
-Depends: ${misc:Depends}, dkms
+Depends: ${misc:Depends}, dkms, device-tree-compiler
 Recommends: linux-headers-rpi-2712 | linux-headers-rpi-v8
 Description: Sony IMX585 camera driver for Raspberry Pi (DKMS)
  Kernel module and device tree overlay for Sony IMX585, an 8.3 MP
