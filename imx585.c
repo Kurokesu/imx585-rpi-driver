@@ -1126,7 +1126,7 @@ static void imx585_update_hmax(struct imx585 *imx585)
 		supported_modes[i].min_hmax = h;
 		supported_modes[i].min_vmax = v;
 
-		dev_dbg(imx585->clientdev, " mode %ux%u -> VMAX=%u HMAX=%u\n",
+		dev_dbg(imx585->clientdev, "Mode %ux%u -> VMAX=%u HMAX=%u\n",
 			supported_modes[i].width, supported_modes[i].height, v,
 			h);
 	}
@@ -1143,7 +1143,7 @@ static void imx585_update_hmax(struct imx585 *imx585)
 		supported_10bit_modes[i].min_hmax = h;
 		supported_10bit_modes[i].min_vmax = v;
 
-		dev_dbg(imx585->clientdev, " mode %ux%u -> VMAX=%u HMAX=%u\n",
+		dev_dbg(imx585->clientdev, "Mode %ux%u -> VMAX=%u HMAX=%u\n",
 			supported_10bit_modes[i].width,
 			supported_10bit_modes[i].height, v, h);
 	}
