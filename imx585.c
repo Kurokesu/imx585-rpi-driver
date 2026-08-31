@@ -1100,9 +1100,9 @@ static void imx585_update_hmax(struct imx585 *imx585)
 	const u32 hdr_scale = imx585->clear_hdr ? 2 : 1;
 	unsigned int i;
 
-	dev_info(imx585->clientdev,
-		 "Minimum HMAX: link_freq=%llu lane_scale=%u hdr_scale=%u\n",
-		 link_freqs[imx585->link_freq_idx], lane_scale, hdr_scale);
+	dev_dbg(imx585->clientdev,
+		"Minimum HMAX: link_freq=%llu lane_scale=%u hdr_scale=%u\n",
+		link_freqs[imx585->link_freq_idx], lane_scale, hdr_scale);
 
 	for (i = 0; i < ARRAY_SIZE(supported_modes); ++i) {
 		u32 h = supported_modes[i].hmax_table[imx585->link_freq_idx] *
@@ -1126,9 +1126,9 @@ static void imx585_update_hmax(struct imx585 *imx585)
 		supported_modes[i].min_hmax = h;
 		supported_modes[i].min_vmax = v;
 
-		dev_info(imx585->clientdev, " mode %ux%u -> VMAX=%u HMAX=%u\n",
-			 supported_modes[i].width, supported_modes[i].height, v,
-			 h);
+		dev_dbg(imx585->clientdev, " mode %ux%u -> VMAX=%u HMAX=%u\n",
+			supported_modes[i].width, supported_modes[i].height, v,
+			h);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(supported_10bit_modes); ++i) {
@@ -1143,9 +1143,9 @@ static void imx585_update_hmax(struct imx585 *imx585)
 		supported_10bit_modes[i].min_hmax = h;
 		supported_10bit_modes[i].min_vmax = v;
 
-		dev_info(imx585->clientdev, " mode %ux%u -> VMAX=%u HMAX=%u\n",
-			 supported_10bit_modes[i].width,
-			 supported_10bit_modes[i].height, v, h);
+		dev_dbg(imx585->clientdev, " mode %ux%u -> VMAX=%u HMAX=%u\n",
+			supported_10bit_modes[i].width,
+			supported_10bit_modes[i].height, v, h);
 	}
 }
 
@@ -1182,9 +1182,8 @@ static void imx585_set_framing_limits(struct imx585 *imx585,
 				 imx585->vmax - IMX585_SHR_MIN_HDR, 1,
 				 IMX585_EXP_DEFAULT);
 
-	dev_info(imx585->clientdev,
-		 "Framing: VMAX=%u HMAX=%u pixel_rate=%llu\n", imx585->vmax,
-		 imx585->hmax, pixel_rate);
+	dev_dbg(imx585->clientdev, "Framing: VMAX=%u HMAX=%u pixel_rate=%llu\n",
+		imx585->vmax, imx585->hmax, pixel_rate);
 }
 
 static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
@@ -1211,8 +1210,8 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 			imx585->hcg = imx585->clear_hdr ? 0 : imx585->hcg;
 			__v4l2_ctrl_s_ctrl(imx585->hcg_ctrl, imx585->hcg);
 			imx585_update_gain_limits(imx585);
-			dev_info(imx585->clientdev, "HDR=%u, HCG=%u\n",
-				 ctrl->val, imx585->hcg);
+			dev_dbg(imx585->clientdev, "HDR=%u, HCG=%u\n",
+				ctrl->val, imx585->hcg);
 
 			if (state) {
 				struct v4l2_rect *crop;
@@ -1245,7 +1244,7 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 
 		imx585->hcg = ctrl->val;
 		imx585_update_gain_limits(imx585);
-		dev_info(imx585->clientdev, "HCG=%u\n", ctrl->val);
+		dev_dbg(imx585->clientdev, "HCG=%u\n", ctrl->val);
 		break;
 	default:
 		break;
@@ -1280,11 +1279,11 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 			dev_err_ratelimited(imx585->clientdev,
 					    "FDG_SEL0 write failed (%d)\n",
 					    ret);
-		dev_info(imx585->clientdev, "HCG write reg=%u\n", ctrl->val);
+		dev_dbg(imx585->clientdev, "HCG write reg=%u\n", ctrl->val);
 		break;
 	case V4L2_CID_ANALOGUE_GAIN:
-		dev_info(imx585->clientdev, "ANALOG_GAIN=%u (%s)\n", ctrl->val,
-			 imx585->hcg ? "HCG" : "LCG");
+		dev_dbg(imx585->clientdev, "ANALOG_GAIN=%u (%s)\n", ctrl->val,
+			imx585->hcg ? "HCG" : "LCG");
 
 		ret = cci_write(imx585->regmap, IMX585_REG_ANALOG_GAIN,
 				ctrl->val, NULL);
@@ -1306,8 +1305,8 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 					 imx585->vmax - min_shr, 1,
 					 current_exposure);
 
-		dev_info(imx585->clientdev, "VBLANK=%u -> VMAX=%u\n", ctrl->val,
-			 imx585->vmax);
+		dev_dbg(imx585->clientdev, "VBLANK=%u -> VMAX=%u\n", ctrl->val,
+			imx585->vmax);
 
 		ret = cci_write(imx585->regmap, IMX585_REG_VMAX, imx585->vmax,
 				NULL);
@@ -1327,9 +1326,9 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 
 		imx585->hmax = hmax_new;
 
-		dev_info(imx585->clientdev,
-			 "HBLANK=%u -> HMAX=%u (min_hmax=%u, width=%u)\n",
-			 hblank, imx585->hmax, mode->min_hmax, width);
+		dev_dbg(imx585->clientdev,
+			"HBLANK=%u -> HMAX=%u (min_hmax=%u, width=%u)\n",
+			hblank, imx585->hmax, mode->min_hmax, width);
 
 		ret = cci_write(imx585->regmap, IMX585_REG_HMAX, imx585->hmax,
 				NULL);
@@ -1364,7 +1363,7 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	}
 	case V4L2_CID_IMX585_SHR:
-		dev_info(imx585->clientdev, "SHR=%u\n", ctrl->val);
+		dev_dbg(imx585->clientdev, "SHR=%u\n", ctrl->val);
 		if (ctrl->val == 0)
 			break;
 		ret = cci_write(imx585->regmap, IMX585_REG_SHR, ctrl->val,
@@ -1374,7 +1373,7 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 					    "SHR write failed (%d)\n", ret);
 		break;
 	case V4L2_CID_IMX585_VMAX:
-		dev_info(imx585->clientdev, "VMAX=%u\n", ctrl->val);
+		dev_dbg(imx585->clientdev, "VMAX=%u\n", ctrl->val);
 		if (ctrl->val == 0)
 			break;
 		ret = cci_write(imx585->regmap, IMX585_REG_VMAX, ctrl->val,
@@ -1384,7 +1383,7 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 					    "VMAX write failed (%d)\n", ret);
 		break;
 	case V4L2_CID_IMX585_HMAX:
-		dev_info(imx585->clientdev, "HMAX=%u\n", ctrl->val);
+		dev_dbg(imx585->clientdev, "HMAX=%u\n", ctrl->val);
 		if (ctrl->val == 0)
 			break;
 		ret = cci_write(imx585->regmap, IMX585_REG_HMAX, ctrl->val,
@@ -1875,8 +1874,8 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 
 	/* Sync configuration */
 	if (imx585->sync_mode == SYNC_INT_FOLLOWER) {
-		dev_info(imx585->clientdev,
-			 "Internal sync follower: XVS input\n");
+		dev_dbg(imx585->clientdev,
+			"Internal sync follower: XVS input\n");
 		ret = cci_write(imx585->regmap, IMX585_REG_EXTMODE, 0x01, NULL);
 		/* XHS out, XVS in */
 		if (!ret)
@@ -1887,8 +1886,8 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 			ret = cci_write(imx585->regmap, IMX585_REG_XXS_OUTSEL,
 					0x08, NULL);
 	} else if (imx585->sync_mode == SYNC_INT_LEADER) {
-		dev_info(imx585->clientdev,
-			 "Internal sync leader: XVS/XHS output\n");
+		dev_dbg(imx585->clientdev,
+			"Internal sync leader: XVS/XHS output\n");
 		ret = cci_write(imx585->regmap, IMX585_REG_EXTMODE, 0x00, NULL);
 		/* XHS/XVS out */
 		if (!ret)
@@ -1898,7 +1897,7 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 			ret = cci_write(imx585->regmap, IMX585_REG_XXS_OUTSEL,
 					0x0A, NULL);
 	} else {
-		dev_info(imx585->clientdev, "External sync: XVS/XHS input\n");
+		dev_dbg(imx585->clientdev, "External sync: XVS/XHS input\n");
 		ret = cci_write(imx585->regmap, IMX585_REG_XXS_DRV, 0x0F,
 				NULL); /* inputs */
 		if (!ret)
@@ -1996,7 +1995,7 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 	if (ret)
 		goto err_rpm_put;
 
-	dev_info(imx585->clientdev, "Streaming started\n");
+	dev_dbg(imx585->clientdev, "Streaming started\n");
 	usleep_range(IMX585_STREAM_DELAY_US,
 		     IMX585_STREAM_DELAY_US + IMX585_STREAM_DELAY_RANGE_US);
 
@@ -2045,7 +2044,7 @@ static int imx585_power_on(struct device *dev)
 	struct imx585 *imx585 = to_imx585(sd);
 	int ret;
 
-	dev_info(imx585->clientdev, "power_on\n");
+	dev_dbg(imx585->clientdev, "power_on\n");
 
 	ret = regulator_bulk_enable(IMX585_NUM_SUPPLIES, imx585->supplies);
 	if (ret) {
@@ -2074,7 +2073,7 @@ static int imx585_power_off(struct device *dev)
 	struct v4l2_subdev *sd = dev_get_drvdata(dev);
 	struct imx585 *imx585 = to_imx585(sd);
 
-	dev_info(imx585->clientdev, "power_off\n");
+	dev_dbg(imx585->clientdev, "power_off\n");
 
 	gpiod_set_value_cansleep(imx585->reset_gpio, 0);
 	regulator_bulk_disable(IMX585_NUM_SUPPLIES, imx585->supplies);
@@ -2258,7 +2257,6 @@ static int imx585_probe(struct i2c_client *client)
 	v4l2_i2c_subdev_init(&imx585->sd, client, &imx585_subdev_ops);
 	imx585->clientdev = dev;
 
-	dev_info(dev, "Reading dtoverlay config:\n");
 	imx585->mono = of_property_read_bool(dev->of_node, "mono-mode");
 	if (imx585->mono)
 		dev_info(dev, "Mono mode selected, check sensor variant\n");
