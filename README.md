@@ -18,7 +18,7 @@ Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illumi
 - Mono variant support
 - Three sync modes for multi-camera setups
 
-![Kurokesu camera modules connected to a Raspberry Pi 5](https://raw.githubusercontent.com/Kurokesu/imx585-rpi-driver/main/docs/kurokesu-on-pi.jpg)
+![Kurokesu camera modules connected to a Raspberry Pi 5.](https://raw.githubusercontent.com/Kurokesu/imx585-rpi-driver/main/docs/kurokesu-on-pi.jpg)
 
 *IMX585 camera modules are available at [kurokesu.com](https://www.kurokesu.com/item/585C-CSI)*
 
@@ -120,7 +120,7 @@ rpicam-still -o test.jpg
 |--------|-------------|---------|
 | [`cam0`](#cam0) | Use cam0 port instead of cam1 | cam1 |
 | [`2lane`](#2lane) | Use 2-lane MIPI CSI-2 | 4 lanes |
-| [`mono`](#mono) | Enable monochrome sensor variant | off |
+| [`mono`](#mono) | Enable mono sensor variant | off |
 | [`ccmp`](#ccmp) | Enable 12-bit compressed Clear HDR output | off |
 | [`always-on`](#always-on) | Keep regulator powered (prevents runtime PM power-off) | off |
 | [`link-frequency=<Hz>`](#link-frequency) | Set MIPI CSI-2 link frequency (Hz) | 720000000 |
@@ -147,7 +147,7 @@ dtoverlay=imx585,2lane
 
 ### mono
 
-For the monochrome sensor variant, append `,mono`:
+For mono sensor variant, append `,mono`:
 
 ```ini
 dtoverlay=imx585,mono
