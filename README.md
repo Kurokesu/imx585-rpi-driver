@@ -193,7 +193,7 @@ dtoverlay=imx585,link-frequency=891000000
 | 1039500000 | 2079 | 69.9 fps | 35.0 fps | 90.0 fps |
 
 > [!NOTE]
-> RPi5/RP1 has a 400 Mpix/s processing limit. Without overclocking RP1 (the Camera Frontend), effective framerate is capped at ~43.8 fps @ 4K regardless of the link frequency configured here.
+> RPi5/RP1 has a 380 Mpix/s processing limit. Effective framerate is capped at ~43.8 fps @ 4K regardless of the link frequency configured here.
 
 > [!NOTE]
 > Clear HDR halves these rates and caps at 30.0 fps.
