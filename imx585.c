@@ -459,6 +459,7 @@ static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	/* ACMP2_EXP = 1/32 high slope, natural inverse spans 16-bit */
 	{ CCI_REG8(0x36ec), 0x05 },
 	{ CCI_REG8(0x36ee), 0x06 }, /* ACMP1_EXP = 1/64 middle slope */
+	{ IMX585_REG_CCMP_EN, 0x01 }, /* Gradation compression to 12-bit */
 };
 
 static const struct cci_reg_sequence common_normal_mode[] = {
@@ -475,6 +476,7 @@ static const struct cci_reg_sequence common_normal_mode[] = {
 	{ CCI_REG8(0x3e10), 0x10 }, /* ADTHEN */
 	{ CCI_REG8(0x493c), 0x23 }, /* 10-bit Normal */
 	{ CCI_REG8(0x4940), 0x23 }, /* 12-bit Normal */
+	{ IMX585_REG_CCMP_EN, 0x00 },
 };
 
 /* clang-format on */
@@ -505,18 +507,6 @@ static const struct cci_reg_sequence mode_1080_regs_12bit[] = {
 	{ CCI_REG8(0x30d5), 0x02 }, /* DIG_CLP_VSTART binning */
 };
 
-/*
- * All-pixel 4K, 16-bit Clear HDR. Same as the 12-bit table, but pairs
- * with win_crop_regs_16bit and MDBIT is overridden to 0x03 (RAW16) at
- * runtime in imx585_enable_streams.
- */
-static const struct cci_reg_sequence mode_4k_regs_16bit[] = {
-	{ CCI_REG8(0x301b), 0x00 }, /* ADDMODE non-binning */
-	{ CCI_REG8(0x3022), 0x02 }, /* ADBIT 12-bit */
-	{ IMX585_REG_MDBIT, 0x01 }, /* MDBIT 12-bit */
-	{ CCI_REG8(0x30d5), 0x04 }, /* DIG_CLP_VSTART non-binning */
-};
-
 /* Window starts at recording area, so buffer carries no OB rows */
 static const struct cci_reg_sequence win_crop_regs_12bit[] = {
 	{ IMX585_REG_WINMODE, IMX585_WINMODE_CROP },
@@ -526,27 +516,13 @@ static const struct cci_reg_sequence win_crop_regs_12bit[] = {
 	{ IMX585_REG_PIX_VWIDTH, 2160 }, /* active height */
 };
 
-/* RAW16 keeps OB rows whatever WINMODE says, so window grows to fit them */
-static const struct cci_reg_sequence win_crop_regs_16bit[] = {
-	{ IMX585_REG_WINMODE, IMX585_WINMODE_CROP },
-	{ IMX585_REG_PIX_HST, 8 }, /* skip H-margin */
-	{ IMX585_REG_PIX_HWIDTH, 3840 }, /* active width */
-	{ IMX585_REG_PIX_VST, 12 }, /* skip V-margin */
-	{ IMX585_REG_PIX_VWIDTH, 2180 }, /* active + 20 for the OB prepend */
-};
-
 /*
  * Binning is digital, so FHD reads out at the same speed as 4K. hmax_div
  * exists to let FHD be overclocked past that, and both share one VMAX.
- *
- * get_mode_table() routes 12-bit to modes [0] and [1], 16-bit to mode [2].
- * Mode [2] advertises height = active + 2 * OB so the centred crop clears the
- * OB rows RAW16 still emits.
  */
 enum imx585_mode_id {
 	IMX585_MODE_1080P_12BIT,
 	IMX585_MODE_4K_12BIT,
-	IMX585_MODE_4K_16BIT_HDR,
 };
 
 static struct imx585_mode supported_modes[] = {
@@ -596,29 +572,6 @@ static struct imx585_mode supported_modes[] = {
 			.regs = win_crop_regs_12bit,
 		},
 	},
-	{
-		/* 4K60 all-pixel, 16-bit Clear HDR. See win_crop_regs_16bit. */
-		.width = IMX585_PIXEL_ARRAY_WIDTH,                                  /* 3840 */
-		.height = IMX585_PIXEL_ARRAY_HEIGHT + 2 * IMX585_PIXEL_ARRAY_TOP, /* 2200 */
-		.hmax_div = 1,
-		.hmax_table = HMAX_table_4lane_4K_12bit,
-		.min_hmax = 550,
-		.min_vmax = IMX585_VMAX_DEFAULT,
-		.crop = {
-			.left = IMX585_PIXEL_ARRAY_LEFT,
-			.top = IMX585_PIXEL_ARRAY_TOP,
-			.width = IMX585_PIXEL_ARRAY_WIDTH,
-			.height = IMX585_PIXEL_ARRAY_HEIGHT,
-		},
-		.reg_list = {
-			.num_of_regs = ARRAY_SIZE(mode_4k_regs_16bit),
-			.regs = mode_4k_regs_16bit,
-		},
-		.win_crop = {
-			.num_of_regs = ARRAY_SIZE(win_crop_regs_16bit),
-			.regs = win_crop_regs_16bit,
-		},
-	},
 };
 
 static struct imx585_mode supported_10bit_modes[] = {
@@ -656,12 +609,6 @@ static const u32 codes_normal[] = {
 };
 
 static const u32 codes_clearhdr[] = {
-	/* 16-bit first */
-	MEDIA_BUS_FMT_SRGGB16_1X16,
-	MEDIA_BUS_FMT_SGRBG16_1X16,
-	MEDIA_BUS_FMT_SGBRG16_1X16,
-	MEDIA_BUS_FMT_SBGGR16_1X16,
-	/* then 12-bit */
 	MEDIA_BUS_FMT_SRGGB12_1X12,
 	MEDIA_BUS_FMT_SGRBG12_1X12,
 	MEDIA_BUS_FMT_SGBRG12_1X12,
@@ -669,7 +616,6 @@ static const u32 codes_clearhdr[] = {
 };
 
 static const u32 mono_codes[] = {
-	MEDIA_BUS_FMT_Y16_1X16,
 	MEDIA_BUS_FMT_Y12_1X12,
 	MEDIA_BUS_FMT_Y10_1X10,
 };
@@ -729,7 +675,6 @@ struct imx585 {
 	/* Flags/params */
 	bool hcg;
 	bool mono;
-	bool clearhdr_ccmp;
 	bool clear_hdr;
 
 	/*
@@ -781,44 +726,15 @@ static int imx585_update_test_pattern(struct imx585 *imx585, u32 pattern_index)
 	return cci_write(imx585->regmap, IMX585_REG_TPG_TESTCLKEN, 0x0A, NULL);
 }
 
-static bool imx585_is_clearhdr_16bit_code(u32 code)
-{
-	switch (code) {
-	case MEDIA_BUS_FMT_SRGGB16_1X16:
-	case MEDIA_BUS_FMT_SGRBG16_1X16:
-	case MEDIA_BUS_FMT_SGBRG16_1X16:
-	case MEDIA_BUS_FMT_SBGGR16_1X16:
-	case MEDIA_BUS_FMT_Y16_1X16:
-		return true;
-	default:
-		return false;
-	}
-}
-
-static bool imx585_is_clearhdr_12bit_code(u32 code)
-{
-	switch (code) {
-	case MEDIA_BUS_FMT_SRGGB12_1X12:
-	case MEDIA_BUS_FMT_SGRBG12_1X12:
-	case MEDIA_BUS_FMT_SGBRG12_1X12:
-	case MEDIA_BUS_FMT_SBGGR12_1X12:
-	case MEDIA_BUS_FMT_Y12_1X12:
-		return true;
-	default:
-		return false;
-	}
-}
-
 static void imx585_activate_hdr_controls(struct imx585 *imx585)
 {
 	const bool clear_hdr = imx585->clear_hdr;
-	const bool ccmp = clear_hdr && imx585->clearhdr_ccmp;
 
 	v4l2_ctrl_activate(imx585->datasel_th_ctrl, clear_hdr);
 	v4l2_ctrl_activate(imx585->datasel_bk_ctrl, clear_hdr);
-	v4l2_ctrl_activate(imx585->gdc_th_ctrl, ccmp);
-	v4l2_ctrl_activate(imx585->gdc_exp_ctrl_h, ccmp);
-	v4l2_ctrl_activate(imx585->gdc_exp_ctrl_l, ccmp);
+	v4l2_ctrl_activate(imx585->gdc_th_ctrl, clear_hdr);
+	v4l2_ctrl_activate(imx585->gdc_exp_ctrl_h, clear_hdr);
+	v4l2_ctrl_activate(imx585->gdc_exp_ctrl_l, clear_hdr);
 	v4l2_ctrl_activate(imx585->hdr_gain_ctrl, clear_hdr);
 	v4l2_ctrl_activate(imx585->hcg_ctrl, !clear_hdr);
 }
@@ -833,11 +749,9 @@ static void imx585_select_12bit_modes(struct imx585 *imx585,
 		return;
 	}
 
-	/* Clear HDR 12-bit is only valid with gradation compression */
-	if (imx585->clearhdr_ccmp) {
-		*mode_list = &supported_modes[IMX585_MODE_4K_12BIT];
-		*num_modes = 1;
-	}
+	/* Clear HDR is 4K only */
+	*mode_list = &supported_modes[IMX585_MODE_4K_12BIT];
+	*num_modes = 1;
 }
 
 static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
@@ -848,11 +762,7 @@ static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 	*num_modes = 0;
 
 	if (imx585->mono) {
-		/* Y16 needs Clear HDR and 4K, Y12 routes to the 12-bit modes. */
-		if (code == MEDIA_BUS_FMT_Y16_1X16 && imx585->clear_hdr) {
-			*mode_list = &supported_modes[IMX585_MODE_4K_16BIT_HDR];
-			*num_modes = 1;
-		} else if (code == MEDIA_BUS_FMT_Y12_1X12) {
+		if (code == MEDIA_BUS_FMT_Y12_1X12) {
 			imx585_select_12bit_modes(imx585, mode_list, num_modes);
 		} else if (code == MEDIA_BUS_FMT_Y10_1X10 &&
 			   !imx585->clear_hdr) {
@@ -861,19 +771,6 @@ static inline void get_mode_table(struct imx585 *imx585, unsigned int code,
 		}
 	} else {
 		switch (code) {
-		/* 16-bit is Clear HDR linear, 4K only. */
-		case MEDIA_BUS_FMT_SRGGB16_1X16:
-		case MEDIA_BUS_FMT_SGRBG16_1X16:
-		case MEDIA_BUS_FMT_SGBRG16_1X16:
-		case MEDIA_BUS_FMT_SBGGR16_1X16:
-			*mode_list = &supported_modes[IMX585_MODE_4K_16BIT_HDR];
-			*num_modes = 1;
-			break;
-
-		/*
-		 * 12-bit. Binned Clear HDR is 16-bit only, so
-		 * imx585_select_12bit_modes drops binned entry under WDR
-		 */
 		case MEDIA_BUS_FMT_SRGGB12_1X12:
 		case MEDIA_BUS_FMT_SGRBG12_1X12:
 		case MEDIA_BUS_FMT_SGBRG12_1X12:
@@ -910,76 +807,32 @@ static bool imx585_code_in_table(const u32 *table, unsigned int num_entries,
 
 static u32 imx585_get_format_code(struct imx585 *imx585, u32 code)
 {
-	u32 mapped_code = 0;
-	unsigned int i;
+	const u32 *tbl = imx585->clear_hdr ? codes_clearhdr : codes_normal;
+	const unsigned int entries = imx585->clear_hdr ?
+					     ARRAY_SIZE(codes_clearhdr) :
+					     ARRAY_SIZE(codes_normal);
 
 	if (imx585->mono) {
-		if (imx585->clear_hdr) {
-			if (code == MEDIA_BUS_FMT_Y16_1X16)
-				return code;
-			if (imx585->clearhdr_ccmp &&
-			    code == MEDIA_BUS_FMT_Y12_1X12)
-				return code;
-			return MEDIA_BUS_FMT_Y16_1X16;
-		}
-
-		if (code == MEDIA_BUS_FMT_Y12_1X12 ||
-		    code == MEDIA_BUS_FMT_Y10_1X10)
+		if (code == MEDIA_BUS_FMT_Y10_1X10 && !imx585->clear_hdr)
 			return code;
 		return MEDIA_BUS_FMT_Y12_1X12;
 	}
 
-	if (imx585->clear_hdr) {
-		for (i = 0; i < ARRAY_SIZE(codes_clearhdr); i++)
-			if (codes_clearhdr[i] == code &&
-			    (imx585_is_clearhdr_16bit_code(code) ||
-			     imx585->clearhdr_ccmp))
-				return codes_clearhdr[i];
-		return codes_clearhdr[0];
-	}
+	if (imx585_code_in_table(tbl, entries, code))
+		return code;
 
-	for (i = 0; i < ARRAY_SIZE(codes_normal); i++)
-		if (codes_normal[i] == code)
-			return codes_normal[i];
-
-	switch (code) {
-	case MEDIA_BUS_FMT_SRGGB16_1X16:
-		mapped_code = MEDIA_BUS_FMT_SRGGB12_1X12;
-		break;
-	case MEDIA_BUS_FMT_SGRBG16_1X16:
-		mapped_code = MEDIA_BUS_FMT_SGRBG12_1X12;
-		break;
-	case MEDIA_BUS_FMT_SGBRG16_1X16:
-		mapped_code = MEDIA_BUS_FMT_SGBRG12_1X12;
-		break;
-	case MEDIA_BUS_FMT_SBGGR16_1X16:
-		mapped_code = MEDIA_BUS_FMT_SBGGR12_1X12;
-		break;
-	default:
-		break;
-	}
-
-	if (mapped_code &&
-	    imx585_code_in_table(codes_normal, ARRAY_SIZE(codes_normal),
-				 mapped_code))
-		return mapped_code;
-
-	return codes_normal[0];
+	return tbl[0];
 }
 
 static u32 imx585_default_format_code(struct imx585 *imx585)
 {
-	if (imx585->mono)
-		return imx585->clear_hdr ? MEDIA_BUS_FMT_Y16_1X16 :
-					   MEDIA_BUS_FMT_Y12_1X12;
-
-	return imx585->clear_hdr ? MEDIA_BUS_FMT_SRGGB16_1X16 :
-				   MEDIA_BUS_FMT_SRGGB12_1X12;
+	return imx585->mono ? MEDIA_BUS_FMT_Y12_1X12 :
+			      MEDIA_BUS_FMT_SRGGB12_1X12;
 }
 
 static const struct imx585_mode *imx585_default_mode(struct imx585 *imx585)
 {
-	return imx585->clear_hdr ? &supported_modes[IMX585_MODE_4K_16BIT_HDR] :
+	return imx585->clear_hdr ? &supported_modes[IMX585_MODE_4K_12BIT] :
 				   &supported_modes[IMX585_MODE_1080P_12BIT];
 }
 
@@ -1678,24 +1531,16 @@ static int imx585_enum_mbus_code(struct v4l2_subdev *sd,
 		return -EINVAL;
 
 	if (imx585->mono) {
-		if (imx585->clear_hdr) {
-			if (code->index >= (imx585->clearhdr_ccmp ? 2 : 1))
-				return -EINVAL;
-			code->code = mono_codes[code->index];
-			return 0;
-		}
-		if (code->index > 1)
+		entries = imx585->clear_hdr ? 1 : ARRAY_SIZE(mono_codes);
+		if (code->index >= entries)
 			return -EINVAL;
-		code->code = code->index ? MEDIA_BUS_FMT_Y10_1X10 :
-					   MEDIA_BUS_FMT_Y12_1X12;
+		code->code = mono_codes[code->index];
 		return 0;
 	}
 
 	if (imx585->clear_hdr) {
 		tbl = codes_clearhdr;
-		entries = imx585->clearhdr_ccmp ?
-				  ARRAY_SIZE(codes_clearhdr) / 4 :
-				  1;
+		entries = ARRAY_SIZE(codes_clearhdr) / 4;
 	} else {
 		tbl = codes_normal;
 		entries = ARRAY_SIZE(codes_normal) / 4;
@@ -1887,28 +1732,6 @@ static int imx585_enable_streams(struct v4l2_subdev *sd,
 				"Failed to set Clear HDR regs\n");
 			goto err_rpm_put;
 		}
-
-		/* 16-bit is linear, 12-bit takes opt-in gradation compression. */
-		if (imx585_is_clearhdr_16bit_code(fmt_code)) {
-			ret = cci_write(imx585->regmap, IMX585_REG_CCMP_EN,
-					0x00, NULL);
-			if (!ret)
-				ret = cci_write(imx585->regmap,
-						IMX585_REG_MDBIT, 0x03, NULL);
-		} else if (imx585->clearhdr_ccmp &&
-			   imx585_is_clearhdr_12bit_code(fmt_code)) {
-			ret = cci_write(imx585->regmap, IMX585_REG_CCMP_EN,
-					0x01, NULL);
-			if (!ret)
-				ret = cci_write(imx585->regmap,
-						IMX585_REG_MDBIT, 0x01, NULL);
-		} else {
-			dev_err(imx585->clientdev,
-				"12-bit Clear HDR CCMP requested without ccmp overlay flag\n");
-			ret = -EINVAL;
-		}
-		if (ret)
-			goto err_rpm_put;
 	} else {
 		ret = cci_multi_reg_write(imx585->regmap, common_normal_mode,
 					  ARRAY_SIZE(common_normal_mode), NULL);
@@ -2212,10 +2035,6 @@ static int imx585_probe(struct i2c_client *client)
 	imx585->mono = of_property_read_bool(dev->of_node, "mono-mode");
 	if (imx585->mono)
 		dev_info(dev, "Mono mode selected, check sensor variant\n");
-	imx585->clearhdr_ccmp =
-		of_property_read_bool(dev->of_node, "sony,clearhdr-ccmp");
-	dev_info(dev, "Clear HDR 12-bit CCMP: %s\n",
-		 imx585->clearhdr_ccmp ? "enabled" : "disabled");
 
 	imx585->sync_mode = SYNC_INT_LEADER;
 	if (!device_property_read_string(dev, "sony,sync-mode", &sync_mode)) {
