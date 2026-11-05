@@ -170,21 +170,18 @@ To change link frequency, append `,link-frequency=<Hz>`:
 dtoverlay=imx585,link-frequency=891000000
 ```
 
-| Frequency (Hz) | Mbps/lane | Max FPS @ 4K 12-bit 4-lane | Max FPS @ 4K 12-bit 2-lane | Max FPS @ 4K 10-bit 4-lane |
-|---|---|---|---|---|
-| 297000000 | 594 | 20.8 fps | 10.4 fps | 25.0 fps |
-| 360000000 | 720 | 25.0 fps | 12.5 fps | 30.0 fps |
-| 445500000 | 891 | 30.0 fps | 15.0 fps | 30.0 fps |
-| 594000000 | 1188 | 41.7 fps | 20.8 fps | 50.0 fps |
-| 720000000 (default) | 1440 | 50.0 fps | 25.0 fps | 60.0 fps |
-| 891000000 | 1782 | 60.0 fps | 30.0 fps | 60.0 fps |
-| 1039500000 | 2079 | 69.9 fps | 35.0 fps | 90.0 fps |
+| Frequency (Hz) | Mbps/lane | Max FPS @ 4K 12-bit 4-lane | Max FPS @ 4K 12-bit 2-lane | Max FPS @ 4K 10-bit 4-lane | Max FPS @ 4K Clear HDR 4-lane |
+|---|---|---|---|---|---|
+| 297000000 | 594 | 20.8 fps | 10.4 fps | 25.0 fps | 20.8 fps |
+| 360000000 | 720 | 25.0 fps | 12.5 fps | 30.0 fps | 25.0 fps |
+| 445500000 | 891 | 30.0 fps | 15.0 fps | 30.0 fps | 30.0 fps |
+| 594000000 | 1188 | 41.7 fps | 20.8 fps | 50.0 fps | 30.0 fps |
+| 720000000 (default) | 1440 | 50.0 fps | 25.0 fps | 60.0 fps | 30.0 fps |
+| 891000000 | 1782 | 60.0 fps | 30.0 fps | 60.0 fps | 30.0 fps |
+| 1039500000 | 2079 | 69.9 fps | 35.0 fps | 90.0 fps | 30.0 fps |
 
 > [!NOTE]
-> RPi5/RP1 has a 380 Mpix/s processing limit. Effective framerate is capped at ~43.8 fps @ 4K regardless of the link frequency configured here.
-
-> [!NOTE]
-> On 4-lane, Clear HDR runs at 12-bit rate up to 30 fps.
+> RPi5/RP1 ISP processes up to 390 Mpix/s. Normal 4K modes are capped at ≈ 45 fps regardless of link frequency configured here. Clear HDR stays below this limit.
 
 > [!WARNING]
 > 1188 MHz (2376 Mbps/lane) is also accepted, but RPi4 does not support this rate and RPi5 exhibits frame drops. Not recommended for production use.
