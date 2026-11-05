@@ -451,8 +451,8 @@ static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	{ CCI_REG8(0x36d5), 0x00 },
 	/* EXP_BK = HG 1/2, LG 1/2, only used in overlap */
 	{ CCI_REG8(0x36e2), 0x00 },
-	/* ACMP2_EXP = 1/16 high slope, natural inverse spans 16-bit */
-	{ CCI_REG8(0x36ec), 0x04 },
+	/* ACMP2_EXP = 1/32 high slope, natural inverse spans 16-bit */
+	{ CCI_REG8(0x36ec), 0x05 },
 	{ CCI_REG8(0x36ee), 0x06 }, /* ACMP1_EXP = 1/64 middle slope */
 };
 
@@ -1437,7 +1437,11 @@ static const struct v4l2_ctrl_config imx585_cfg_datasel_bk = {
 	.qmenu = hdr_data_blender_menu,
 };
 
-static const u32 grad_thresh_def[2] = { 500, 11500 };
+/*
+ * Equal knees skip the middle segment. The 12-bit knee then lands on a
+ * 1024 step of the 16-bit decompand input. Keep in sync with libcamera.
+ */
+static const u32 grad_thresh_def[2] = { 1976, 1976 };
 /* Compression knee points, th[0] writes CCMP1_EXP and th[1] CCMP2_EXP. */
 static const struct v4l2_ctrl_config imx585_cfg_grad_th = {
 	.ops = &imx585_ctrl_ops,
@@ -1474,7 +1478,7 @@ static const struct v4l2_ctrl_config imx585_cfg_grad_exp_h = {
 	.type = V4L2_CTRL_TYPE_MENU,
 	.min = 0,
 	.max = 5,
-	.def = 4, /* 1/16, natural inverse spans 16-bit cleanly */
+	.def = 5, /* 1/32, natural inverse spans 16-bit cleanly */
 	.qmenu = grad_compression_slope_menu,
 };
 
