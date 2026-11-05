@@ -14,7 +14,7 @@ Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illumi
 - 3840×2160 @ 90 fps (10-bit)
 - 3840×2160 @ 70 fps (12-bit)
 - 1920×1080 @ 70 fps (2×2 binning)
-- Clear HDR mode for high-dynamic-range capture (experimental)
+- [Clear HDR](#clear-hdr) for single-exposure high dynamic range
 - Mono variant support
 - Three sync modes for multi-camera setups
 
@@ -121,7 +121,6 @@ rpicam-still -o test.jpg
 | [`cam0`](#cam0) | Use cam0 port instead of cam1 | cam1 |
 | [`2lane`](#2lane) | Use 2-lane MIPI CSI-2 | 4 lanes |
 | [`mono`](#mono) | Enable mono sensor variant | off |
-| [`ccmp`](#ccmp) | Enable 12-bit compressed Clear HDR output | off |
 | [`always-on`](#always-on) | Keep regulator powered (prevents runtime PM power-off) | off |
 | [`link-frequency=<Hz>`](#link-frequency) | Set MIPI CSI-2 link frequency (Hz) | 720000000 |
 | [`sync-mode=<mode>`](#sync-mode) | Multi-camera synchronization mode | internal-leader |
@@ -152,17 +151,6 @@ For mono sensor variant, append `,mono`:
 ```ini
 dtoverlay=imx585,mono
 ```
-
-### ccmp
-
-Clear HDR outputs 16-bit by default. `ccmp` enables sensor gradation compression, adding a 12-bit Clear HDR format with the same HDR range at a quarter less bandwidth:
-
-```ini
-dtoverlay=imx585,ccmp
-```
-
-> [!WARNING]
-> Clear HDR is experimental and not yet tuned. Bright parts of a scene can render black in both 16-bit and 12-bit output.
 
 ### always-on
 
@@ -196,7 +184,7 @@ dtoverlay=imx585,link-frequency=891000000
 > RPi5/RP1 has a 380 Mpix/s processing limit. Effective framerate is capped at ~43.8 fps @ 4K regardless of the link frequency configured here.
 
 > [!NOTE]
-> Clear HDR halves these rates and caps at 30.0 fps.
+> On 4-lane, Clear HDR runs at 12-bit rate up to 30 fps.
 
 > [!WARNING]
 > 1188 MHz (2376 Mbps/lane) is also accepted, but RPi4 does not support this rate and RPi5 exhibits frame drops. Not recommended for production use.
@@ -223,6 +211,53 @@ See the [IMX585 Camera Clock Synchronization Guide](https://github.com/will12753
 > ```ini
 > dtoverlay=imx585,mono,always-on,cam0,link-frequency=297000000
 > ```
+
+## Clear HDR
+
+IMX585 reads each exposure at high and low gain, then merges both reads on sensor. Single exposure means no ghosting on moving subjects. Merged output is gradation compressed to 12-bit. libcamera expands it back to linear.
+
+Clear HDR is enabled by appending `--hdr` to `rpicam` commands:
+
+```bash
+rpicam-still --hdr -o hdr.jpg
+```
+
+*`--hdr` also enables ISP tonemapping to hold highlights.*
+
+### List Clear HDR modes
+
+```bash
+rpicam-hello --list-cameras --hdr
+```
+
+Expected output (varies by link frequency and lane configuration):
+
+```
+Available cameras
+-----------------
+0 : imx585 [3840x2160 12-bit RGGB] (/base/axi/pcie@1000120000/rp1/i2c@80000/imx585@1a)
+    Modes: 'SRGGB12_CSI2P' : 3840x2160 [30.00 fps - (0, 0)/3840x2160 crop]
+```
+
+### Picamera2
+
+Enable Clear HDR on sensor before opening camera:
+
+```bash
+v4l2-ctl -d /dev/v4l-subdev2 -c wide_dynamic_range=1
+```
+
+*Subdev number varies. Find it with `grep imx585 /sys/class/video4linux/v4l-subdev*/name`.*
+
+Request tonemapping in configuration:
+
+```python
+from libcamera import controls
+
+config = picam2.create_still_configuration(
+    controls={"HdrMode": controls.HdrModeEnum.SingleExposure},
+)
+```
 
 ## Build from source
 
