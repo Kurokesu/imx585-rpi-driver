@@ -133,8 +133,10 @@
 #define IMX585_GAIN_MIN_LCG 0
 #define IMX585_GAIN_MIN_HCG 34
 #define IMX585_GAIN_MAX_SDR 240
-/* Clear HDR leaves GAIN + EXP_GAIN range to IPA */
+/* Clear HDR also limits high gain branch, GAIN + EXP_GAIN */
 #define IMX585_GAIN_MAX_HDR 80
+#define IMX585_GAIN_MIN_HDR_TOTAL 32
+#define IMX585_GAIN_MAX_HDR_TOTAL 97
 #define IMX585_GAIN_STEP 1
 #define IMX585_GAIN_DEFAULT 0
 
@@ -252,6 +254,9 @@ static const struct imx585_inck_cfg imx585_inck_table[] = {
 static const char *const hdr_gain_adder_menu[] = {
 	"+0dB", "+6dB", "+12dB", "+18dB", "+24dB", "+29.1dB",
 };
+
+/* hdr_gain_adder_menu in GAIN register units */
+static const u8 hdr_gain_adder_reg[] = { 0, 20, 40, 60, 80, 97 };
 
 static const char *const hdr_data_blender_menu[] = {
 	"HG 1/2, LG 1/2", /* 0h */
@@ -1029,10 +1034,18 @@ static void imx585_reset_colorspace(struct v4l2_mbus_framefmt *fmt)
 static void imx585_update_gain_limits(struct imx585 *imx585)
 {
 	const bool hcg_on = imx585->hcg;
-	const bool clear_hdr = imx585->clear_hdr;
-	const u32 min = hcg_on ? IMX585_GAIN_MIN_HCG : IMX585_GAIN_MIN_LCG;
-	const u32 max = clear_hdr ? IMX585_GAIN_MAX_HDR : IMX585_GAIN_MAX_SDR;
+	u32 min = hcg_on ? IMX585_GAIN_MIN_HCG : IMX585_GAIN_MIN_LCG;
+	u32 max = IMX585_GAIN_MAX_SDR;
 	u32 cur = imx585->gain->val;
+
+	if (imx585->clear_hdr) {
+		const int adder =
+			hdr_gain_adder_reg[imx585->hdr_gain_ctrl->val];
+
+		min = max_t(int, IMX585_GAIN_MIN_HDR_TOTAL - adder, 0);
+		max = min_t(int, IMX585_GAIN_MAX_HDR,
+			    IMX585_GAIN_MAX_HDR_TOTAL - adder);
+	}
 
 	__v4l2_ctrl_modify_range(imx585->gain, min, max, IMX585_GAIN_STEP,
 				 clamp(cur, min, max));
@@ -1184,6 +1197,9 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 		imx585->hcg = ctrl->val;
 		imx585_update_gain_limits(imx585);
 		dev_dbg(imx585->clientdev, "HCG=%u\n", ctrl->val);
+		break;
+	case V4L2_CID_IMX585_HDR_GAIN:
+		imx585_update_gain_limits(imx585);
 		break;
 	default:
 		break;
