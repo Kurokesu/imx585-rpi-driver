@@ -913,6 +913,13 @@ static u32 imx585_row_lines(struct imx585 *imx585)
 	return imx585->clear_hdr ? 2 : 1;
 }
 
+static u32 imx585_exposure_to_shr(struct imx585 *imx585, u32 exposure)
+{
+	u32 shr = imx585->vmax - exposure * imx585_row_lines(imx585);
+
+	return round_down(shr, imx585->clear_hdr ? 4 : 2);
+}
+
 /* Recompute per-mode timing limits (HMAX/VMAX) from link/lanes/HDR */
 static void imx585_update_hmax(struct imx585 *imx585)
 {
@@ -1075,9 +1082,7 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 
 	switch (ctrl->id) {
 	case V4L2_CID_EXPOSURE: {
-		const u32 rows = imx585_row_lines(imx585);
-		u32 shr = (imx585->vmax - ctrl->val * rows) &
-			  ~1U; /* SHR always a multiple of 2 */
+		u32 shr = imx585_exposure_to_shr(imx585, ctrl->val);
 
 		dev_dbg(imx585->clientdev,
 			"EXPOSURE=%u -> SHR=%u (VMAX=%u HMAX=%u)\n", ctrl->val,
