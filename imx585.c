@@ -448,19 +448,6 @@ static const struct cci_reg_sequence common_clearhdr_mode[] = {
 	{ CCI_REG8(0x3e10), 0x17 }, /* ADTHEN */
 	{ CCI_REG8(0x493c), 0x41 }, /* 10-bit HDR */
 	{ CCI_REG8(0x4940), 0x41 }, /* 12-bit HDR */
-	{ CCI_REG8(0x3081), 0x02 }, /* EXP_GAIN: +12 dB default */
-	/* Equal thresholds clamp 16-bit output near BLC */
-	/* EXP_TH_H = 0x0FFF, HG saturation cutoff */
-	{ CCI_REG8(0x36d0), 0xFF },
-	{ CCI_REG8(0x36d1), 0x0F },
-	/* EXP_TH_L = 0x0000, no low cutoff */
-	{ CCI_REG8(0x36d4), 0x00 },
-	{ CCI_REG8(0x36d5), 0x00 },
-	/* EXP_BK = HG 1/2, LG 1/2, only used in overlap */
-	{ CCI_REG8(0x36e2), 0x00 },
-	/* ACMP2_EXP = 1/32 high slope, natural inverse spans 16-bit */
-	{ CCI_REG8(0x36ec), 0x05 },
-	{ CCI_REG8(0x36ee), 0x06 }, /* ACMP1_EXP = 1/64 middle slope */
 	{ IMX585_REG_CCMP_EN, 0x01 }, /* Gradation compression to 12-bit */
 };
 
