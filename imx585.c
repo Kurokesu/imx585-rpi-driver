@@ -92,7 +92,7 @@
 #define IMX585_REG_VMAX CCI_REG24_LE(0x3028)
 #define IMX585_VMAX_MAX 0xfffff
 #define IMX585_VMAX_DEFAULT 2250
-/* Min HMAX (4-lane) for the Clear HDR dual HG+LG read, see imx585_update_hmax */
+#define IMX585_HMAX_MIN_12BIT 550
 #define IMX585_HMAX_MIN_CLEARHDR 550
 
 /* HMAX internal HBLANK */
@@ -226,7 +226,7 @@ static const u16 HMAX_table_4lane_4K_12bit[] = {
 	[IMX585_LINK_FREQ_594MHZ] = 792,
 	[IMX585_LINK_FREQ_720MHZ] = 660,
 	[IMX585_LINK_FREQ_891MHZ] = 550,
-	/* 440 reaches ~75 fps but breaks low-signal frames */
+	/* Raised to 12-bit AD floor in imx585_update_hmax */
 	[IMX585_LINK_FREQ_1039MHZ] = 472,
 	[IMX585_LINK_FREQ_1188MHZ] = 472,
 };
@@ -939,11 +939,13 @@ static void imx585_update_hmax(struct imx585 *imx585)
 		u32 v = IMX585_VMAX_DEFAULT * rows;
 
 		/*
-		 * Link carries one row per row_lines HMAX. Dual HG+LG read
-		 * loses rows below the floor, at any bit depth or lane count.
+		 * Link carries one row per row_lines HMAX. 12-bit AD and dual
+		 * HG+LG read lose rows below their floors at any lane count.
 		 */
 		if (imx585->clear_hdr)
 			h = max_t(u32, h / rows, IMX585_HMAX_MIN_CLEARHDR);
+		else
+			h = max_t(u32, h, IMX585_HMAX_MIN_12BIT);
 
 		supported_modes[i].min_hmax = h;
 		supported_modes[i].min_vmax = v;
