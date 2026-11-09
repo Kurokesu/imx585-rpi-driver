@@ -12,9 +12,9 @@ Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illumi
 - 2-lane and 4-lane MIPI CSI-2 (up to 2079 Mbps/lane)
 - 10-bit and 12-bit RAW output
 - 3840×2160 @ 90 fps (10-bit)
-- 3840×2160 @ 70 fps (12-bit)
-- 1920×1080 @ 70 fps (2×2 binning)
-- [Clear HDR](#clear-hdr) for single-exposure high dynamic range
+- 3840×2160 @ 60 fps (12-bit)
+- 1920×1080 @ 60 fps (2×2 binning)
+- [Clear HDR](#clear-hdr) for single-exposure high dynamic range on Raspberry Pi 5
 - Mono variant support
 - Three sync modes for multi-camera setups
 
@@ -167,7 +167,7 @@ Default link frequency is 720 MHz (1440 Mbps/lane). Other values trade MIPI band
 To change link frequency, append `,link-frequency=<Hz>`:
 
 ```ini
-dtoverlay=imx585,link-frequency=891000000
+dtoverlay=imx585,link-frequency=594000000
 ```
 
 | Frequency (Hz) | Mbps/lane | Max FPS @ 4K 12-bit 4-lane | Max FPS @ 4K 12-bit 2-lane | Max FPS @ 4K 10-bit 4-lane | Max FPS @ 4K Clear HDR 4-lane | Max FPS @ 4K Clear HDR 2-lane |
@@ -181,10 +181,12 @@ dtoverlay=imx585,link-frequency=891000000
 | 1039500000 | 2079 | 60.0 fps | 35.0 fps | 90.0 fps | 30.0 fps | 30.0 fps |
 
 > [!NOTE]
-> RPi5/RP1 ISP processes up to 390 Mpix/s. Normal 4K modes are capped at ≈ 45 fps regardless of link frequency configured here. Clear HDR stays below this limit.
+> Raspberry Pi 5 CSI receiver (RP1) accepts up to 720 MHz (1440 Mbps/lane). 891 MHz and 1039.5 MHz work on Raspberry Pi 4 only.
+>
+> RP1 processes up to 390 Mpix/s. Normal 4K modes are capped at ≈ 45 fps regardless of link frequency configured here. Clear HDR stays below this limit.
 
 > [!WARNING]
-> 1188 MHz (2376 Mbps/lane) is also accepted, but RPi4 does not support this rate and RPi5 exhibits frame drops. Not recommended for production use.
+> 1188 MHz (2376 Mbps/lane) is also accepted, but Raspberry Pi 4 does not support this rate and Raspberry Pi 5 exhibits frame drops. Not recommended for production use.
 
 ### sync-mode
 
@@ -212,6 +214,9 @@ See the [IMX585 Camera Clock Synchronization Guide](https://github.com/will12753
 ## Clear HDR
 
 IMX585 reads each exposure at high and low gain, then merges both reads on sensor. Single exposure means no ghosting on moving subjects. Merged output is gradation compressed to 12-bit. libcamera expands it back to linear.
+
+> [!IMPORTANT]
+> Clear HDR requires Raspberry Pi 5. Raspberry Pi 4 ISP has no decompand block.
 
 Clear HDR is enabled by appending `--hdr` to `rpicam` commands:
 
