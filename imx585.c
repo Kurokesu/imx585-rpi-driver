@@ -50,6 +50,8 @@
 #define IMX585_STREAM_DELAY_US 25000
 #define IMX585_STREAM_DELAY_RANGE_US 1000
 
+#define IMX585_REG_REGHOLD CCI_REG8(0x3001)
+
 /* Initialisation delay between XCLR low->high and the moment sensor is ready */
 #define IMX585_XCLR_MIN_DELAY_US 500000
 #define IMX585_XCLR_DELAY_RANGE_US 1000
@@ -1117,28 +1119,36 @@ static int imx585_set_ctrl(struct v4l2_ctrl *ctrl)
 					    "Gain write failed (%d)\n", ret);
 		break;
 	case V4L2_CID_VBLANK: {
-		u32 current_exposure = imx585->exposure->cur.val;
+		u32 exposure = imx585->exposure->val;
 		const u32 rows = imx585_row_lines(imx585);
 		const u32 min_shr = imx585->clear_hdr ? IMX585_SHR_MIN_HDR :
 							IMX585_SHR_MIN;
 		u32 max_exposure;
+		int ret_hold;
 
 		imx585->vmax = ((mode->height + ctrl->val) * rows) & ~1U;
 		max_exposure = (imx585->vmax - min_shr) / rows;
-
-		current_exposure = clamp_t(u32, current_exposure,
-					   IMX585_EXP_MIN, max_exposure);
-		__v4l2_ctrl_modify_range(imx585->exposure, IMX585_EXP_MIN,
-					 max_exposure, 1, current_exposure);
+		exposure = clamp_t(u32, exposure, IMX585_EXP_MIN, max_exposure);
 
 		dev_dbg(imx585->clientdev, "VBLANK=%u -> VMAX=%u\n", ctrl->val,
 			imx585->vmax);
 
-		ret = cci_write(imx585->regmap, IMX585_REG_VMAX, imx585->vmax,
-				NULL);
+		/* SHR is relative to VMAX, latch both to keep exposure */
+		cci_write(imx585->regmap, IMX585_REG_REGHOLD, 1, &ret);
+		cci_write(imx585->regmap, IMX585_REG_VMAX, imx585->vmax, &ret);
+		cci_write(imx585->regmap, IMX585_REG_SHR,
+			  imx585_exposure_to_shr(imx585, exposure), &ret);
+		/* Release hold even after error, report its own failure */
+		ret_hold =
+			cci_write(imx585->regmap, IMX585_REG_REGHOLD, 0, NULL);
+		if (ret_hold)
+			ret = ret_hold;
 		if (ret)
 			dev_err_ratelimited(imx585->clientdev,
 					    "VMAX write failed (%d)\n", ret);
+
+		__v4l2_ctrl_modify_range(imx585->exposure, IMX585_EXP_MIN,
+					 max_exposure, 1, exposure);
 		break;
 	}
 	case V4L2_CID_HBLANK: {
