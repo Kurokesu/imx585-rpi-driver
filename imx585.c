@@ -931,11 +931,10 @@ static void imx585_update_hmax(struct imx585 *imx585)
 
 		/*
 		 * Link carries one row per row_lines HMAX. Dual HG+LG read
-		 * loses rows below the floor, at any bit depth.
+		 * loses rows below the floor, at any bit depth or lane count.
 		 */
 		if (imx585->clear_hdr)
-			h = max_t(u32, h / rows,
-				  IMX585_HMAX_MIN_CLEARHDR * lane_scale);
+			h = max_t(u32, h / rows, IMX585_HMAX_MIN_CLEARHDR);
 
 		supported_modes[i].min_hmax = h;
 		supported_modes[i].min_vmax = v;
