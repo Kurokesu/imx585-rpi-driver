@@ -1323,11 +1323,8 @@ static const struct v4l2_ctrl_config imx585_cfg_datasel_bk = {
 	.qmenu = hdr_data_blender_menu,
 };
 
-/*
- * Equal knees skip the middle segment. The 12-bit knee then lands on a
- * 1024 step of the 16-bit decompand input. Keep in sync with libcamera.
- */
-static const u32 grad_thresh_def[2] = { 1976, 1976 };
+/* Knee lands on 64-code decompand LUT step. Keep in sync with libcamera */
+static const u32 grad_thresh_def[2] = { 1976, 0x1FFFF };
 /* Compression knee points, th[0] writes CCMP1_EXP and th[1] CCMP2_EXP. */
 static const struct v4l2_ctrl_config imx585_cfg_grad_th = {
 	.ops = &imx585_ctrl_ops,
@@ -1364,7 +1361,7 @@ static const struct v4l2_ctrl_config imx585_cfg_grad_exp_h = {
 	.type = V4L2_CTRL_TYPE_MENU,
 	.min = 0,
 	.max = 5,
-	.def = 5, /* 1/32, natural inverse spans 16-bit cleanly */
+	.def = 5, /* 1/32 */
 	.qmenu = grad_compression_slope_menu,
 };
 
