@@ -1299,7 +1299,7 @@ static const struct v4l2_ctrl_ops imx585_ctrl_ops = {
  * th[0] writes EXP_TH_H and th[1] EXP_TH_L. EXP_TH_H below EXP_TH_L clamps
  * output at BLC
  */
-static const u16 hdr_thresh_def[2] = { 0x0FFF, 0x0000 };
+static const u16 hdr_thresh_def[2] = { 0x0E00, 0x0C00 };
 static const struct v4l2_ctrl_config imx585_cfg_datasel_th = {
 	.ops = &imx585_ctrl_ops,
 	.id = V4L2_CID_IMX585_HDR_DATASEL_TH,
