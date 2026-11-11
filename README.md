@@ -119,7 +119,7 @@ rpicam-still -o test.jpg
 | option | description | default |
 |--------|-------------|---------|
 | [`cam0`](#cam0) | Use cam0 port instead of cam1 | cam1 |
-| [`2lane`](#2lane) | Use 2-lane MIPI CSI-2 | 4 lanes |
+| [`4lane`](#4lane) | Use 4-lane MIPI CSI-2 (if wired) | 2 lanes |
 | [`mono`](#mono) | Enable mono sensor variant | off |
 | [`always-on`](#always-on) | Keep regulator powered (prevents runtime PM power-off) | off |
 | [`link-frequency=<Hz>`](#link-frequency) | Set MIPI CSI-2 link frequency (Hz) | 720000000 |
@@ -133,13 +133,16 @@ If camera is connected to cam0 port, append `,cam0`:
 dtoverlay=imx585,cam0
 ```
 
-### 2lane
+### 4lane
 
-To use 2-lane MIPI CSI-2 instead of the default 4-lane, append `,2lane`:
+To enable 4-lane MIPI CSI-2, append `,4lane`:
 
 ```ini
-dtoverlay=imx585,2lane
+dtoverlay=imx585,4lane
 ```
+
+> [!WARNING]
+> Before using `4lane`, confirm your camera port actually supports 4-lane MIPI CSI. Not all Raspberry Pi models and carrier boards provide 4-lane MIPI CSI on both ports.
 
 > [!NOTE]
 > Maximum framerate is roughly halved on 2-lane compared to 4-lane at the same link frequency. See the [link-frequency](#link-frequency) table for exact values.
