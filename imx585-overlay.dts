@@ -62,8 +62,8 @@
 				assigned-clocks      = <&cam1_clk>;
 				assigned-clock-rates = <24000000>;    /* Hz*/
 
-				rotation = <0>;
-				orientation = <0>;
+				rotation = <180>;
+				orientation = <2>;
 				sony,sync-mode = "internal-leader";
 
 				vana-supply = <&cam1_reg>;	/* 3.3v */
