@@ -95,9 +95,9 @@ Expected output (varies by link frequency and lane configuration):
 Available cameras
 -----------------
 0 : imx585 [3840x2160 12-bit RGGB] (/base/axi/pcie@1000120000/rp1/i2c@80000/imx585@1a)
-    Modes: 'SRGGB10_CSI2P' : 3840x2160 [43.98 fps - (0, 0)/3840x2160 crop]
-           'SRGGB12_CSI2P' : 1920x1080 [50.00 fps - (0, 0)/1920x1080 crop]
-                             3840x2160 [43.98 fps - (0, 0)/3840x2160 crop]
+    Modes: 'SRGGB10_CSI2P' : 3840x2160 [45.14 fps - (0, 0)/3840x2160 crop]
+           'SRGGB12_CSI2P' : 1920x1080 [50.00 fps - (0, 0)/3840x2160 crop]
+                             3840x2160 [45.14 fps - (0, 0)/3840x2160 crop]
 ```
 
 Start live preview:
