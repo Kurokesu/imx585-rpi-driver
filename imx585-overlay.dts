@@ -8,28 +8,28 @@
 	fragment@0 {
 		target = <&cam_endpoint>;
 		__overlay__ {
-			data-lanes = <1 2 3 4>;
+			data-lanes = <1 2>;
 		};
 	};
 
 	fragment@1 {
 		target = <&cam_endpoint>;
 		__dormant__ {
-			data-lanes = <1 2>;
+			data-lanes = <1 2 3 4>;
 		};
 	};
 
 	fragment@2 {
 		target = <&csi_ep>;
 		__overlay__ {
-			data-lanes = <1 2 3 4>;
+			data-lanes = <1 2>;
 		};
 	};
 
 	fragment@3 {
 		target = <&csi_ep>;
 		__dormant__ {
-			data-lanes = <1 2>;
+			data-lanes = <1 2 3 4>;
 		};
 	};
 
@@ -120,7 +120,7 @@
 	};
 
 	__overrides__ {
-		2lane = <0>, "-0+1-2+3";
+		4lane = <0>, "-0+1-2+3";
 		always-on = <0>, "+99";
 		rotation    = <&cam_node>,"rotation:0";
 		orientation = <&cam_node>,"orientation:0";
