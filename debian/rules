@@ -22,4 +22,4 @@ override_dh_install:
 			exit 1; \
 		fi; \
 	fi
-	dh_install imx585.c imx585-overlay.dts Makefile dkms.postinst $(DKMS_DEST)
+	dh_install imx585.c $(wildcard *-overlay.dts) Makefile dkms.postinst $(DKMS_DEST)
