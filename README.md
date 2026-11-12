@@ -220,6 +220,10 @@ Clear HDR is Sony's single-exposure high dynamic range (HDR) mode. IMX585 reads 
 
 Sensor runs Clear HDR at full 3840×2160 resolution, up to 30 fps, for stills and video.
 
+Same scene in normal mode (left) and Clear HDR (right), auto exposure in both:
+
+![IMX585 in normal mode loses the car in shadow, Clear HDR keeps detail in both the shadow and the lit car.](https://raw.githubusercontent.com/Kurokesu/imx585-rpi-driver/main/docs/clear-hdr-comparison.jpg)
+
 > [!IMPORTANT]
 > Clear HDR requires Raspberry Pi 5. Raspberry Pi 4 ISP has no decompand block.
 
