@@ -17,5 +17,5 @@ Description: Sony IMX585 camera driver for Raspberry Pi (DKMS)
  6.12 or newer.
  .
  DKMS builds the module on target, so one package covers every Raspberry Pi
- OS release and kernel update. Installing it also places imx585 overlay
- in /boot/overlays.
+ OS release and kernel update. Installing it also places its device tree
+ overlay in /boot/overlays.
