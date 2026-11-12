@@ -1,3 +1,11 @@
+imx585-rpi-dkms (0.3.1-1) unstable; urgency=medium
+
+  * Bind sensor by kurokesu,imx585-csi compatible. In-tree Starvis 2
+    driver in Raspberry Pi kernel 6.18.60 also claims sony,imx585 and
+    could take the sensor. Both drivers now load side by side.
+
+ -- Danius Kalvaitis <danius@kurokesu.com>  Fri, 13 Nov 2026 00:50:40 +0200
+
 imx585-rpi-dkms (0.3.0-1) unstable; urgency=medium
 
   * Clear HDR, no longer experimental:
