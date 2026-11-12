@@ -2173,7 +2173,7 @@ static DEFINE_RUNTIME_DEV_PM_OPS(imx585_pm_ops, imx585_power_off,
 				 imx585_power_on, NULL);
 
 static const struct of_device_id imx585_of_match[] = {
-	{ .compatible = "sony,imx585" },
+	{ .compatible = "kurokesu,imx585-csi" },
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, imx585_of_match);
