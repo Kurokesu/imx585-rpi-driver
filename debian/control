@@ -11,6 +11,7 @@ Package: imx585-rpi-dkms
 Architecture: all
 Depends: ${misc:Depends}, dkms, device-tree-compiler
 Recommends: linux-headers-rpi-2712 | linux-headers-rpi-v8
+Breaks: libcamera-ipa (<< 1:0.8.0+rpt20261104+krks1-1~)
 Description: Sony IMX585 camera driver for Raspberry Pi (DKMS)
  Kernel module and device tree overlay for Sony IMX585, an 8.3 MP
  STARVIS 2 rolling shutter CMOS sensor, on Raspberry Pi with kernel
