@@ -5,7 +5,8 @@ Packaging branch for imx585-rpi-dkms, kept separate from driver source
 under a DEP-14 layout:
 
   * main           - driver source (imx585.c, Makefile, overlay, dkms.conf,
-                     setup.sh). Tagged v<upstream> per release.
+                     install.sh, uninstall.sh). Tagged v<upstream> per
+                     release.
   * debian/latest  - this branch: debian/ recipe only, no source. Tagged
                      debian/<upstream>-<revision> per packaging release.
 
@@ -78,14 +79,14 @@ the .deb plus a build's .changes and .buildinfo, alongside SHA256SUMS and
 a detached SHA256SUMS.asc. A source package stays in workflow-run
 artifacts only.
 
-Migrating from a setup.sh install
----------------------------------
+Migrating from a source install
+-------------------------------
 
-If setup.sh already installed the module, DKMS owns its tree under the
-same package name, so a first package install collides. Remove the
-hand-built module once:
+If install.sh, formerly setup.sh, already installed the module, DKMS
+owns its tree under the same package name, so a first package install
+collides. Remove the hand-built module once, from a driver clone:
 
-  sudo dkms remove imx585-rpi-dkms/<old-version> --all
+  sudo ./uninstall.sh
   sudo dpkg --configure -a   # if a package install was interrupted
 
 Subsequent package upgrades need no manual steps.
