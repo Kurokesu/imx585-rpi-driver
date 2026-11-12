@@ -7,14 +7,14 @@
 [![RPi OS Bookworm | Trixie](https://img.shields.io/badge/RPi_OS-Bookworm_%7C_Trixie-blue?logo=raspberrypi)](https://www.raspberrypi.com/software/operating-systems/)
 [![Kernel 6.12+](https://img.shields.io/badge/kernel-6.12%2B-blue?logo=raspberrypi)](https://github.com/raspberrypi/linux/tree/rpi-6.12.y)
 
-Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illuminated CMOS sensor optimised for low-light and 4K applications.
+Raspberry Pi kernel driver for Sony IMX585, an 8.3 MP STARVIS 2 back-side illuminated CMOS sensor optimised for low-light and 4K applications. Clear HDR, single-exposure high dynamic range (HDR), works with `rpicam-apps` and Picamera2 on Raspberry Pi 5.
 
+- [Clear HDR](#clear-hdr) single-exposure HDR, 3840×2160 @ 30 fps on Raspberry Pi 5
 - 2-lane and 4-lane MIPI CSI-2 (up to 2079 Mbps/lane)
 - 10-bit and 12-bit RAW output
 - 3840×2160 @ 90 fps (10-bit)
 - 3840×2160 @ 60 fps (12-bit)
 - 1920×1080 @ 60 fps (2×2 binning)
-- [Clear HDR](#clear-hdr) for single-exposure high dynamic range on Raspberry Pi 5
 - Mono variant support
 - Three sync modes for multi-camera setups
 
@@ -216,7 +216,9 @@ See the [IMX585 Camera Clock Synchronization Guide](https://github.com/will12753
 
 ## Clear HDR
 
-IMX585 reads each exposure at high and low gain, then merges both reads on sensor. Single exposure means no ghosting on moving subjects. Merged output is gradation compressed to 12-bit. libcamera expands it back to linear.
+Clear HDR is Sony's single-exposure high dynamic range (HDR) mode. IMX585 reads each exposure at high and low gain, then merges both reads on sensor. Single exposure means no ghosting on moving subjects, unlike multi-exposure HDR. Merged output is gradation compressed to 12-bit. libcamera expands it back to linear, so auto exposure and white balance behave as in normal modes.
+
+Sensor runs Clear HDR at full 3840×2160 resolution, up to 30 fps, for stills and video.
 
 > [!IMPORTANT]
 > Clear HDR requires Raspberry Pi 5. Raspberry Pi 4 ISP has no decompand block.
@@ -225,6 +227,7 @@ Clear HDR is enabled by appending `--hdr` to `rpicam` commands:
 
 ```bash
 rpicam-still --hdr -o hdr.jpg
+rpicam-vid --hdr -t 10000 --width 1920 --height 1080 -o hdr.h264
 ```
 
 *`--hdr` also enables ISP tonemapping to hold highlights.*
