@@ -265,10 +265,14 @@ Request tonemapping in configuration:
 
 ```python
 from libcamera import controls
+from picamera2 import Picamera2
 
+picam2 = Picamera2()
 config = picam2.create_still_configuration(
     controls={"HdrMode": controls.HdrModeEnum.SingleExposure},
 )
+picam2.configure(config)
+picam2.start_and_capture_file("hdr.jpg")
 ```
 
 ## Build from source
